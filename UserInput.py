@@ -17,7 +17,7 @@ conn.close()
 def sConvert(condition,dbName):
     return "SELECT * from "+dbName+" where "+formatCondition(condition)
 
-#Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string
+#Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 def formatCondition(condition):
     condition=condition.replace(" ","")
     allowedCondition=[">=","<=",">","<","="]
@@ -46,7 +46,7 @@ def pConvert(argument,dbName):
 
     return sqlStr
 #Convertisseur pour l'opérateur JOIN
-def jconvert(dbName1,dbName2,dbFileName1,dbFileName2):
+def jconvert(dbName1,dbName2):
     sqlStr="SELECT * FROM "
     sqlStr+=dbName1
     sqlStr+=" NATURAL JOIN "
