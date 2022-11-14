@@ -25,3 +25,14 @@ class SQL:
 
 	def __str__(self)
 
+class Select (Expr):
+	def __int__(self):
+		pass
+
+
+class Project(Expr):
+	def __init__(self,element):
+		pass
+	def __str__(self):
+		return "project "
+
