@@ -162,6 +162,6 @@ class SQL:
 		return self.sql
 
 if __name__ == "__main__":
-	SQL("@select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
-	SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
+	#SQL("@select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
+	#SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
 	SQL("A @join B @join C")
