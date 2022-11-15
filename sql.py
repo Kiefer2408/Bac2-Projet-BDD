@@ -46,13 +46,15 @@ class SQL:
 			"project": "[A-Za-z0-9]+(, *[A-Za-z0-9]+)*",
 			"rename": "[A-Za-z0-9]:[A-Za-z0-9]"
 		}
+		
 
-	def __init__(self, string):
+	def convert_to_ast(self, string):
 		self.lexeme_list = self.to_lexeme(string)
-		print(self.lexeme_list)
 		self.lc = self.lexeme_list[0]
 		self.t = self.expression()
-		print(str(self.t) + "\n")
+		if(self.lexeme_list.index(self.lc) != len(self.lexeme_list)-1):
+			raise Exception("ERROR SYNTAX")
+		return(self.t)
 
 
 	# Convertis une chaîne de caractère en Lexeme, càd elle fragmente la chaîne en unité de langage
@@ -104,27 +106,20 @@ class SQL:
 				lexeme_list.append(Lexeme(x))
 
 			i += 1
+		lexeme_list.append(Lexeme("EOL"))
 		return lexeme_list
 
 	# truc compliqué à expliquer
 	def expression(self):
 		t = self.facteur()
+		if(self.lc.nature not in [")", "link"]):
+			raise Exception("ERROR : INVALID SYNTAX")
 		while(self.lc.nature == "link"):
 			nature = self.lc.value
 			self.next()
 			r = self.facteur()
 			t = Terme(nature, t, r)
 		return t
-
-	# def expression(self):
-	# 	t = self.facteur()
-	# 	match self.lc.nature:
-	# 		case "link":
-	# 			nature = self.lc.value
-	# 			self.next()
-	# 			return Terme(nature, t, self.expression())
-	# 		case _:
-	# 			return t
 
 	# truc compliqué à expliquer bis
 	def facteur(self):
@@ -133,23 +128,24 @@ class SQL:
 				self.next()
 				t = self.expression()
 				if(self.lc.nature != ")"):
-					print("ERROR : MISSING )")
-					exit()
+					raise Exception(f"ERROR : MISSING )")
 			case "str":
 				t = Terme("table", self.lc.value)
 			case "condition":
 				t = Terme("condition", self.lc.value)
+
+			# (, modify, condition, table, )
 			case "modify":
 				nature = self.lc.value
 				self.next()
-				condition = self.expression()
+				condition = self.facteur()
 				if(not re.search(self.regex.get(nature), condition.a1)):
-					print(f"ERROR : WRONG CONDITION SYNTAX \"{{{condition.a1}}}\"")
-					exit()
-				t = Terme(nature, condition, self.expression())
+					raise Exception(f"ERROR : WRONG CONDITION SYNTAX \"{{{condition.a1}}}\"")
+				return Terme(nature, condition, self.facteur())
+			case "EOL":
+				pass
 			case _:
-				print(f"ERROR : UNKNOW COMMAND \"{self.lc.nature}\"")
-				exit()
+				raise Exception(f"ERROR : UNKNOW COMMAND \"{self.lc.nature}\"")
 		self.next()
 		return t
 
@@ -162,6 +158,17 @@ class SQL:
 		return self.sql
 
 if __name__ == "__main__":
-	#SQL("@select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
-	#SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
-	SQL("A @join B @join C")
+	sql = SQL()
+	while True:
+		x = input("SPJRUD >>")
+		if(x == "@exit"):
+			break
+		try:
+			print(sql.convert_to_ast(x))
+		except Exception as e:
+			print("\033[93m" + str(e) + "\033[0m")
+
+
+	# SQL("select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
+	# SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
+	# SQL("A @join B @join C")
