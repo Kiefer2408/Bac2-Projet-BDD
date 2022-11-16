@@ -119,10 +119,11 @@ class SQL:
 		t = self.facteur()
 		if(self.lc.nature not in [")", "link", "EOL"]):
 			raise Exception("ERROR : INVALID SYNTAX")
-		while(self.lc.nature == "link"):
+		while(self.lc.nature == "link"): #JOIN UNION MINUS
 			nature = self.lc.value
 			self.next()
 			r = self.facteur()
+
 			t = Terme(nature, t, r)
 		return t
 
@@ -140,16 +141,17 @@ class SQL:
 				t = Terme("condition", self.lc.value)
 
 			# (, modify, condition, table, )
-			case "modify":
+			case "modify": 				#select,rename,project
 				nature = self.lc.value
 				self.next()
 				condition = self.facteur()
 				if(not re.search(self.regex.get(nature), condition.a1)):
 					raise BadSyntaxError(f"ERROR : WRONG CONDITION SYNTAX \"{{{condition.a1}}}\"")
 				table = self.facteur()
+				print(table.nature)
 				if(table.nature != "table" or table.nature in ["select", "rename", "project", "join", "union", "minus"]):
 					raise BadSyntaxError(f"ERROR : MISSING TABLE OR EXPRESSION")
-				return Terme(nature, condition, )
+				return Terme(nature, condition,table )
 			case "EOL":
 				return None
 			case _:
