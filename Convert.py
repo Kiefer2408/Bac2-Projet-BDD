@@ -12,9 +12,9 @@ def formatCondition(condition):
             op=operator
             break;
     if left.isalpha():
-        left="'"+left+"'"
+        left='"'+left+'"'
     if right.isalpha():
-        right="'"+right+"'"
+        right='"'+right+'"'
     newCondition=left+op+right
     return newCondition
 
@@ -24,10 +24,7 @@ def sConvert(condition,RName):
 
 #Convertisseur pour l'opérateur PROJECT
 def pConvert(argument,RName):
-    print(argument,RName)
     sqlStr = "SELECT DISTINCT "
-
-    #sqlStr += ",".join(argument)
     sqlStr += argument
     sqlStr +=" from "
     sqlStr += RName
@@ -97,31 +94,38 @@ def checkSameAtribute(RName1,RName2,dbFileName1):
     return validity
 
 def termeTraductor(terme):
-    if(terme.a2.nature=="table" and terme.a1.nature in ["select","project","join","rename","union","minus"]):
+    if(terme.b.nature=="table"):
         return termeToSJPRUD(terme)
-    #elif(terme.a2.nature=="table" and terme.a1.nature not in ["select","project","join","rename","union","minus"]):
     else:
-        return termeToSJPRUD(termeTraductor(terme.a2))
+        t=SQL.Terme(terme.nature,terme.a,termeTraductor(terme.b))
+        return termeToSJPRUD(t)
 
 def termeToSJPRUD(terme):
     value=None
+    if(type(terme.b)==str):
+        b=terme.b
+    else:
+        b=terme.b.a
+
     match terme.nature:
         case "select":
-            value=sConvert(terme.a1,terme.a2)
+            value=sConvert(terme.a.a,terme.b.a)
         case "project":
-            value=pConvert(terme.a1.a1, terme.a2.a1)
+            value=pConvert(terme.a.a, b)
         case "join":
-            value=jconvert(terme.a1.a1,terme.a2.a1)
+            value=jconvert(terme.a.a,terme.b.a)
         case "rename":
-            value=rConvert(terme.a1.a1,terme.a2.a1)
+            value=rConvert(terme.a.a,terme.b.a)
         case "union":
-            value=uConvert(terme.a1.a1,terme.a2.a1)
+            value=uConvert(terme.a.a,terme.b.a)
         case "minus":
-            value=dConvert(terme.a1.a1,terme.a2.a1)
+            value=dConvert(terme.a.a,terme.b.a)
     return value
 
 if __name__ == "__main__":
     #print(getDbKeys("test.db","COMPANY"))
     sql=SQL.SQL()
-    #print(sql.convert_to_ast("@project{Population}A"))
-    print((sql.convert_to_ast("@project{Population} ( Land @join Cities)")))
+
+    #print(termeTraductor(sql.convert_to_ast("@project{Population} Cities")))
+    #print(termeTraductor(sql.convert_to_ast("@project{Population} (@select{A=\"city\"} Cities)")))
+    print(termeTraductor(sql.convert_to_ast("@project{Population} ( Cities @minus Cities)")))

@@ -56,7 +56,6 @@ class SQL:
 
 	def convert_to_ast(self, string):
 		self.lexeme_list = self.to_lexeme(string)
-		print(self.lexeme_list)
 		self.lc = self.lexeme_list[0]
 		self.t = self.expression()
 		if(self.lc.nature != "EOL"):
@@ -146,7 +145,6 @@ class SQL:
 
 	# truc compliqué à expliquer bis
 	def facteur(self):
-		print(self.lc.nature)
 		match self.lc.nature:
 			case "(":
 				self.next()
@@ -169,7 +167,6 @@ class SQL:
 					raise WrongConditionSyntax(condition.a)
 				table = self.facteur()
 
-				print(table)
 				if(not table or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
 					raise MissingExprError(table.nature)
 				return Terme(nature, condition, table)
