@@ -1,4 +1,5 @@
 import re
+from Error import *
 
 # Représente une unité de langage
 class Lexeme:
@@ -53,7 +54,7 @@ class SQL:
 		self.lc = self.lexeme_list[0]
 		self.t = self.expression()
 		if(self.lexeme_list.index(self.lc) != len(self.lexeme_list)-1):
-			raise Exception("ERROR SYNTAX")
+			raise BadSyntaxError("ERROR SYNTAX")
 		return(self.t)
 
 
@@ -70,6 +71,8 @@ class SQL:
 
 			if(x == self.prefix):
 				j = i+1
+				if(j == len(expr)):
+					raise UnknowCommand("UNKNOW COMMAND")
 				while(expr[j].isalpha()):
 					if(j == len(expr)-1):
 						j += 1
@@ -80,6 +83,8 @@ class SQL:
 					lexeme_list.append(Lexeme("modify", command))
 				elif(command in ["join", "union", "minus"]):
 					lexeme_list.append(Lexeme("link", command))
+				else:
+					raise UnknowCommand(f"ERROR : UNKNOW COMMAND \"{self.lc.nature}\"")
 				i = j-1
 
 			if(x.isalpha()):
@@ -112,7 +117,7 @@ class SQL:
 	# truc compliqué à expliquer
 	def expression(self):
 		t = self.facteur()
-		if(self.lc.nature not in [")", "link"]):
+		if(self.lc.nature not in [")", "link", "EOL"]):
 			raise Exception("ERROR : INVALID SYNTAX")
 		while(self.lc.nature == "link"):
 			nature = self.lc.value
@@ -128,7 +133,7 @@ class SQL:
 				self.next()
 				t = self.expression()
 				if(self.lc.nature != ")"):
-					raise Exception(f"ERROR : MISSING )")
+					raise BadSyntaxError(f"ERROR : MISSING )")
 			case "str":
 				t = Terme("table", self.lc.value)
 			case "condition":
@@ -140,12 +145,15 @@ class SQL:
 				self.next()
 				condition = self.facteur()
 				if(not re.search(self.regex.get(nature), condition.a1)):
-					raise Exception(f"ERROR : WRONG CONDITION SYNTAX \"{{{condition.a1}}}\"")
-				return Terme(nature, condition, self.facteur())
+					raise BadSyntaxError(f"ERROR : WRONG CONDITION SYNTAX \"{{{condition.a1}}}\"")
+				table = self.facteur()
+				if(table.nature != "table" or table.nature in ["select", "rename", "project", "join", "union", "minus"]):
+					raise BadSyntaxError(f"ERROR : MISSING TABLE OR EXPRESSION")
+				return Terme(nature, condition, )
 			case "EOL":
-				pass
+				return None
 			case _:
-				raise Exception(f"ERROR : UNKNOW COMMAND \"{self.lc.nature}\"")
+				raise UnknowCommand(f"ERROR : UNKNOW COMMAND \"{self.lc.nature}\"")
 		self.next()
 		return t
 
