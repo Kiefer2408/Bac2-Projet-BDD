@@ -35,7 +35,11 @@ class Terme:
 		self.a2 = a2
 
 	def __str__(self):
-		return f"[{self.nature}: {self.a1} {self.a2}]"
+		if(self.a2):
+			return f"[{self.nature}: {self.a1} {self.a2}]"
+		else:
+			return f"[{self.nature}: {self.a1}]"
+
 
 class SQL:
 
@@ -53,7 +57,7 @@ class SQL:
 		self.lexeme_list = self.to_lexeme(string)
 		self.lc = self.lexeme_list[0]
 		self.t = self.expression()
-		if(self.lexeme_list.index(self.lc) != len(self.lexeme_list)-1):
+		if(self.lc.nature != "EOL"):
 			raise BadSyntaxError("ERROR SYNTAX")
 		return(self.t)
 
@@ -65,14 +69,16 @@ class SQL:
 		while (i < len(expr)):
 			x = expr[i]
 
+			# ignore les espaces
 			if(x.isspace()):
 				i += 1
 				continue
 
+			# detecte si c'est une commande ou non
 			if(x == self.prefix):
 				j = i+1
-				if(j == len(expr)):
-					raise UnknowCommand("UNKNOW COMMAND")
+				if(i == len(expr)-1):
+					raise BadSyntaxError(i)
 				while(expr[j].isalpha()):
 					if(j == len(expr)-1):
 						j += 1
