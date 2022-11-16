@@ -1,3 +1,5 @@
+import readline
+
 class Input:
 
 	DEFAULT_DISP = "SPJRUD >> "

@@ -9,17 +9,17 @@ class Test:
 	def run_test(self, input_string, expected_output):
 		try:
 			output = self.sql.convert_to_ast(input_string)
-			if(str(output) == expected_output):
+			if(str(output) == str(expected_output)):
 				self.print_passed(input_string)
 			else:
 				self.print_failed(input_string, output, expected_output)
 
 		except Exception as e:
-			print(e)
 			if(type(e) == type(expected_output)):
 				self.print_passed(input_string)
 			else:
 				self.print_failed(input_string, type(e), type(expected_output))
+				print(e)
 		
 
 	def print_failed(self, input_string, output, expected_output):
@@ -31,13 +31,14 @@ class Test:
 
 if __name__ == "__main__":
 	test = Test()
+	test.run_test("", None)
 	test.run_test("@", UnknowCommand())
 	test.run_test("@s", UnknowCommand())
 	test.run_test("@select", BadSyntaxError())
 	test.run_test("select", BadNameError())
-	test.run_test("table", "[table: table None]")
-	test.run_test("@select{\"A\"=\"A\"} A", BadSyntaxError())
-	test.run_test("@select{A=\"A\"} A", "[select: [condiiton: \"A\"=\"A\" None] [table: A None]")
-	test.run_test("table", "[table: table None]")
-	test.run_test("table", "[table: table None]")
-	test.run_test("table", "[table: table None]")
+	test.run_test("table", "[table: table]")
+	test.run_test("@select{A=\"A\"}", MissingExprError())
+	test.run_test("@select{A=\"A\"} A", "[select: [condition: A=\"A\"] [table: A]]")
+	test.run_test("@select{\"A\"=\"A\"} A", WrongConditionSyntax())
+	test.run_test("(", "[select: [condition: A=\"A\"] [table: A]]")
+	test.run_test("()", BadSyntaxError(²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²))
