@@ -1,22 +1,5 @@
 import sqlite3
 #SPJRUD
-'''
-conn = sqlite3.connect('test.db')
-
-
-cursor = conn.execute("SELECT id, name, address, salary from COMPANY")
-for row in cursor:
-   print ("ID = ", row[0])
-   print ("NAME = ", row[1])
-   print ("ADDRESS = ", row[2])
-   print ("SALARY = ", row[3], "\n")
-conn.close()
-'''
-
-#Convertisseur pour l'opérateur SELECT
-def sConvert(condition,dbName):
-    return "SELECT * from "+dbName+" where "+formatCondition(condition)
-
 #Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 def formatCondition(condition):
     condition=condition.replace(" ","")
@@ -34,70 +17,74 @@ def formatCondition(condition):
     newCondition=left+op+right
     return newCondition
 
+#Convertisseur pour l'opérateur SELECT
+def sConvert(condition,RName):
+    return "SELECT * from "+RName+" where "+formatCondition(condition)
+
 #Convertisseur pour l'opérateur PROJECT
-def pConvert(argument,dbName):
+def pConvert(argument,RName):
 
     sqlStr = "SELECT DISTINCT "
 
     sqlStr += ",".join(argument)
 
     sqlStr+=" from "
-    sqlStr+=dbName
+    sqlStr+=RName
 
     return sqlStr
 #Convertisseur pour l'opérateur JOIN
-def jconvert(dbName1,dbName2):
+def jconvert(RName1,RName2):
     sqlStr="SELECT * FROM "
-    sqlStr+=dbName1
+    sqlStr+=RName1
     sqlStr+=" NATURAL JOIN "
-    sqlStr+=dbName2
+    sqlStr+=RName2
     return sqlStr
 
 #Convertisseur pour l'opérateur RENAME
-def rConvert(oldName,newName,dbFileName,dbName):
+def rConvert(oldName,newName,dbFileName,RName):
 
 
     sqlStr="SELECT "
-    sqlStr+=",".join(getDbKeys(dbFileName,dbName))
+    sqlStr+=",".join(getDbKeys(dbFileName,RName))
     sqlStr = sqlStr.replace(oldName,newName)
-    sqlStr += " FROM "+dbName.upper()
+    sqlStr += " FROM "+RName.upper()
     return sqlStr
 
 #Convertisseur pour l'opérateur UNION
-def uConvert(dbName1,dbName2,dbFileName1,dbFileName2):
-    if checkSameAtribute(dbName1,dbName2,dbFileName1,dbFileName2):
-        sqlStr="SELECT * FROM "+dbName1
+def uConvert(RName1,RName2,dbFileName1):
+    if checkSameAtribute(RName1,RName2,dbFileName1):
+        sqlStr="SELECT * FROM "+RName1
         sqlStr+=" UNION "
-        sqlStr+= "SELECT * FROM "+dbName2
+        sqlStr+= "SELECT * FROM "+RName2
         return sqlStr
     else:
         pass
         #Erreur à envoyer
 #Convertisseur pour l'opérateur DIFFERENCE
-def dConvert(dbName1,dbName2,dbFileName1,dbFileName2):
-    if checkSameAtribute(dbName1,dbName2,dbFileName1,dbFileName2):
-        sqlStr="SELECT * FROM "+dbName1
+def dConvert(RName1,RName2,dbFileName1):
+    if checkSameAtribute(RName1,RName2,dbFileName1):
+        sqlStr="SELECT * FROM "+RName1
         sqlStr+=" MINUS "
-        sqlStr+= "SELECT * FROM "+dbName2
+        sqlStr+= "SELECT * FROM "+RName2
         return sqlStr
     else:
         pass
         #Erreur à envoyer
 
 #Récupère toutes les attributs/Clés d'une table
-def getDbKeys(dbFileName,dbName):
+def getDbKeys(dbFileName,RName):
     con=sqlite3.connect(dbFileName)
     con.row_factory = sqlite3.Row
-    attributeName=con.execute("SELECT * FROM "+dbName.upper())
+    attributeName=con.execute("SELECT * FROM "+RName.upper())
     line = attributeName.fetchone()
     attributes=line.keys()
     con.close()
     return attributes
 
 #Verifie si tous les attribus sont les mêmes dans 2 tables
-def checkSameAtribute(dbName1,dbName2,dbFileName1,dbFileName2):
-    keys1=getDbKeys(dbFileName1,dbName1)
-    keys2=getDbKeys(dbFileName2,dbName2)
+def checkSameAtribute(RName1,RName2,dbFileName1):
+    keys1=getDbKeys(dbFileName1,RName1)
+    keys2=getDbKeys(dbFileName1,RName2)
 
     validity=True
     for attr in keys1:
@@ -107,32 +94,5 @@ def checkSameAtribute(dbName1,dbName2,dbFileName1,dbFileName2):
         if attr not in keys1:
             validity=False
     return validity
-
-def getUserInput():
-    userInput=input("Entrez votre commande SJRUD : \n")
-
-    #Check la validité
-
-
-    #Traitement de l'input
-
-
-
-def operatorValidity(string):
-
-    operatorList=["SELECT",
-                  "PROJECT",
-                  "JOIN",
-                  "RENAME",
-                  "UNION",
-                  "DIFFERENCE"]
-    for op in operatorList:
-        if op in string:
-            return True
-    return False
-
-def treatInput(string):
-    if not operatorValidity(string):
-        pass
 
 print(getDbKeys("test.db","COMPANY"))
