@@ -3,7 +3,10 @@ from Error import *
 
 # Représente une unité de langage
 class Lexeme:
-	# les différentes natures sont str, modify, link, (, ) et condition
+	# les différentes natures valables sont str, modify, link, (, ) et condition
+	# Une valeur est nécessaire pour toutes les natures sauf les ()
+	# La position est utilisé par les erreurs pour indiquer la source de l'erreur
+	# à l'utilisateurs
 	def __init__(self, nature, value=None, position=-1):
 		self.nature = nature
 		self.value = value
@@ -18,7 +21,7 @@ class Lexeme:
 		else:
 			return self.nature
 
-# représente les arbres de syntaxe abstraites
+# représente les noeuds de l'arbre de syntaxe abstrait
 class Terme:
 	# différentes nature qui ont différents attributs:
 	# 	table : a1 = table
@@ -42,11 +45,14 @@ class Terme:
 
 class SQL:
 
-	# préfixe des commandes
+	# Préfixe des commandes
 	prefix = "@"
 
+	# List des commandes disponibles (SPJRUD)
 	command = ["select", "rename", "project", "join", "union", "minus"]
 
+	# Regex vérifiant la syntaxe des conditions des commandes select, rename et 
+	# project
 	regex = {
 			"select": "[A-Za-z0-9]+ *(=|<=|>=|<|>){1} *(\"[A-Za-z0-9]+\"|[0-9]+){1}",
 			"project": "[A-Za-z0-9]+(, *[A-Za-z0-9]+)*",
@@ -54,9 +60,9 @@ class SQL:
 		}
 		
 
+	# Convertis une chaîne de caractère en Arbre de Syntaxe Abstrait (AST)
 	def convert_to_ast(self, string):
 		self.lexeme_list = self.to_lexeme(string)
-		print(self.lexeme_list)
 		self.lc = self.lexeme_list[0]
 		self.t = self.expression()
 		if(self.lc.nature != "EOL"):
@@ -64,7 +70,8 @@ class SQL:
 		return(self.t)
 
 
-	# Convertis une chaîne de caractère en Lexeme, càd elle fragmente la chaîne en unité de langage
+	# Convertis une chaîne de caractère en liste de Lexeme, càd elle fragmente
+	# la chaîne en unités de langage plus facile à trater
 	def to_lexeme(self, expr):
 		lexeme_list = list()
 
@@ -83,24 +90,26 @@ class SQL:
 				if(i == len(expr)-1):
 					raise UnknowCommand(self.prefix, i)
 
+				# récupère le nom de la commande : "@select{} A" -> "select"
 				while(expr[j].isalpha()):
 					if(j == len(expr)-1):
 						j += 1
 						break
 					j += 1
-
-				# récupère le nom de la commande : "@select{} A" -> "select"
 				command = expr[i+1:j]
 
 				if(command in ["select", "rename", "project"]):
 					lexeme_list.append(Lexeme("modify", command, i))
+
 				elif(command in ["join", "union", "minus"]):
 					lexeme_list.append(Lexeme("link", command, i))
+
 				else:
 					raise UnknowCommand(command, i)
 
 				i = j-1
 
+			# detecte les chaînes de caractères
 			if(x.isalpha()):
 				j = i
 				while(expr[j].isalpha()):
@@ -109,11 +118,14 @@ class SQL:
 						break
 					j += 1
 				string = expr[i:j]
+
+				# retourne une erreur si le nom de la table est le même qu'une commande
 				if(string in self.command):
 					raise BadNameError(string, i)
 				lexeme_list.append(Lexeme("str", string, i))
 				i = j-1
 			
+			#  detecte une condition
 			if(x == "{"):
 				j = i+1
 				while(expr[j] != "}"):
@@ -124,10 +136,13 @@ class SQL:
 				lexeme_list.append(Lexeme("condition", expr[i+1:j], i))
 				i = j
 
+			# detecte les parentheses
 			if(x in ["(", ")"]):
 				lexeme_list.append(Lexeme(x, None, i))
 
 			i += 1
+
+
 		lexeme_list.append(Lexeme("EOL", None, i))
 		return lexeme_list
 
@@ -145,7 +160,6 @@ class SQL:
 
 	# truc compliqué à expliquer bis
 	def facteur(self):
-		print(self.lc.nature)
 		match self.lc.nature:
 			case "(":
 				self.next()
@@ -167,9 +181,8 @@ class SQL:
 				if(not re.search(self.regex.get(nature), condition.a)):
 					raise WrongConditionSyntax(condition.a)
 				table = self.facteur()
-				print(table)
 				if(not table or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
-					raise MissingExprError(table.nature)
+					raise MissingExprError(nature)
 				return Terme(nature, condition, table)
 			case "EOL":
 				return None
