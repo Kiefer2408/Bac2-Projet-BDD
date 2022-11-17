@@ -151,10 +151,11 @@ class SQL:
 		t = self.facteur()
 		if(self.lc.nature not in [")", "link", "EOL"]):
 			raise Exception("ERROR : INVALID SYNTAX")
-		while(self.lc.nature == "link"):
+		while(self.lc.nature == "link"): #JOIN UNION MINUS
 			nature = self.lc.value
 			self.next()
 			r = self.facteur()
+
 			t = Terme(nature, t, r)
 		return t
 
@@ -172,7 +173,7 @@ class SQL:
 				t = Terme("condition", self.lc.value)
 
 			# (, modify, condition, table, )
-			case "modify":
+			case "modify": 				#select,rename,project
 				nature = self.lc.value
 				self.next()
 				condition = self.facteur()
@@ -201,6 +202,12 @@ class SQL:
 
 if __name__ == "__main__":
 	sql = SQL()
+	print(type(sql.convert_to_ast("@project[{Population}A")))
+	print(sql.convert_to_ast("@project[{Population}A"))
+	string="@project[{Population}A"
+	a=sql.to_lexeme(string)
+	#for i in range(len(a)):
+		#print(a[i].Terme())
 	while True:
 		x = input("SPJRUD >>")
 		if(x == "@exit"):
@@ -212,5 +219,5 @@ if __name__ == "__main__":
 
 
 	# SQL("select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
-	# SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
+	#SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
 	# SQL("A @join B @join C")
