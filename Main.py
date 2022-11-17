@@ -1,16 +1,17 @@
 import os
 import traceback
 from Input import *
+from Formatter import *
 from SQL import *
-from Convert import to_sql, createTable
-
+from Formatter import *
 debug = True
 
 if __name__ == "__main__":
 	isrunning = True
 
 	inp = Input()
-	Sql = SQL()
+	formatter = Formatter()
+	sql=SQL()
 	os.system('clear')
 	while isrunning:
 		try:
@@ -20,13 +21,21 @@ if __name__ == "__main__":
 					isrunning = False
 				case "@clear":
 					os.system('clear')
+				case "@use":
+					dbName = inp.read("\033[96mUSE >>\x1b[0m")
+					sql = SQL(dbName)
+
+					if os.path.exists(f'{dbName}.db'):
+						print("\033[92mDatabase Found\x1b[0m")
+					else:
+						print("\033[31mDatabase not found\x1b[0m")
 				case _:
 					try:
-						ast = Sql.convert_to_ast(x)
+						print(x)
+						ast = formatter.convert_to_ast(x)
 						print(ast)
-						sql = to_sql(ast)
+						sql = SQL.to_sql(ast)
 						print(sql)
-						createTable(sql)
 					except Exception as e:
 						if(debug):
 							print(traceback.format_exc())
