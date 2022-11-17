@@ -1,5 +1,8 @@
 import sqlite3
 import SQL
+
+alias_number = 0
+
 #SPJRUD
 #Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 def formatCondition(condition):
@@ -20,33 +23,30 @@ def formatCondition(condition):
 
 #Convertisseur pour l'opérateur SELECT
 def sConvert(condition,RName):
-    return "SELECT * from "+RName+" where "+formatCondition(condition)
+    return f"(SELECT * from {RName} {f"{RName}{alias_number}"} where {formatCondition(condition)})"
 
 #Convertisseur pour l'opérateur PROJECT
 def pConvert(argument,RName):
-    sqlStr = "SELECT DISTINCT "
-    sqlStr += argument
-    sqlStr +=" from "
-    sqlStr += RName
-
+    sqlStr = f"(SELECT DISTINCT {argument} from {RName} {f"{RName}{alias_number}"})"
     return sqlStr
+
 #Convertisseur pour l'opérateur JOIN
 def jconvert(RName1,RName2):
-    sqlStr="SELECT * FROM "
-    sqlStr+=RName1
-    sqlStr+=" NATURAL JOIN "
-    sqlStr+=RName2
+    sqlStr = f"(SELECT * FROM {RName1} {f"{RName}{alias_number}"} NATURAL JOIN {RName2} {f"{RName}{alias_number}"})"
     return sqlStr
 
 #Convertisseur pour l'opérateur RENAME
+# (tu devrais pas utiliser ça ? https://stackoverflow.com/questions/614238/how-can-i-rename-a-single-column-in-a-table-at-select)
 def rConvert(oldName,newName,dbFileName,RName):
-
-
-    sqlStr="SELECT "
-    sqlStr+=",".join(getDbKeys(dbFileName,RName))
-    sqlStr = sqlStr.replace(oldName,newName)
-    sqlStr += " FROM "+RName.upper()
+    columns_name = ",".join(getDbKeys(dbFileName,RName)).replace(oldName, f"{oldName} AS {newName}")
+    sqlStr = f"(SELECT {columns_name} FROM {RName}) {f"{RName}{alias_number})"}"
     return sqlStr
+
+    # sqlStr="SELECT "
+    # sqlStr+=",".join(getDbKeys(dbFileName,RName))
+    # sqlStr = sqlStr.replace(oldName,newName)
+    # sqlStr += " FROM "+RName.upper()
+    # return sqlStr
 
 #Convertisseur pour l'opérateur UNION
 def uConvert(RName1,RName2,dbFileName1):
@@ -121,6 +121,25 @@ def termeToSJPRUD(terme):
         case "minus":
             value=dConvert(terme.a.a,terme.b.a)
     return value
+
+def to_sql(terme):
+    sql = None
+    match terme.nature:
+        case "table":
+            sql = terme.a
+        case "select":
+            sql = sConvert(terme.a.a, to_sql(terme.b))
+        case "rename":
+            sql = rConvert(terme.a.a, to_sql(terme.b))
+        case "project":
+            sql = pConvert(terme.a.a, to_sql(terme.b))
+        case "join":
+            sql = jConvert(to_sql(terme.a), to_sql(terme.b))
+        case "minus":
+            sql = mConvert(to_sql(terme.a), to_sql(terme.b))
+        case "union":
+            sql = uConvert(to_sql(terme.a), to_sql(terme.b))
+    return sql
 
 if __name__ == "__main__":
     #print(getDbKeys("test.db","COMPANY"))

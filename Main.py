@@ -1,15 +1,16 @@
 import os
+import traceback
 from Input import *
 from SQL import *
+from Convert import termeTraductor
 
-
-
+debug = True
 
 if __name__ == "__main__":
 	isrunning = True
 
 	inp = Input()
-	sql = SQL()
+	Sql = SQL()
 	os.system('clear')
 	while isrunning:
 		try:
@@ -21,14 +22,16 @@ if __name__ == "__main__":
 					os.system('clear')
 				case _:
 					try:
-						ast = sql.convert_to_ast(x)
+						ast = Sql.convert_to_ast(x)
 						print(ast)
+						sql = termeTraductor(ast)
+						print(sql)
 					except Exception as e:
+						if(debug):
+							print(traceback.format_exc())
 						print("\033[93m" + str(e) + "\033[0m")
 
 		# Quitte l'interpréteur SPJRUD lorsqu'une EOFError est capturée
 		except (EOFError, KeyboardInterrupt):
 			print("\nGoodbye !")
 			exit(0)
-		
-	

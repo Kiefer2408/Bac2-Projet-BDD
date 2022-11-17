@@ -25,6 +25,7 @@ class Lexeme:
 class Terme:
 	# différentes nature qui ont différents attributs:
 	# 	table : a1 = table
+	#	condition : a = condition
 	# 	select : a1 = condition, a2 = table
 	# 	project : a1 = " ", a2 = " "
 	# 	rename : a1 = " ", a2 = " "
@@ -219,5 +220,5 @@ if __name__ == "__main__":
 
 
 	# SQL("select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
-	#SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
+	# SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
 	# SQL("A @join B @join C")
