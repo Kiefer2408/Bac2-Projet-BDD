@@ -23,23 +23,24 @@ def formatCondition(condition):
 
 #Convertisseur pour l'opérateur SELECT
 def sConvert(condition,RName):
-    return f"(SELECT * from {RName} {f"{RName}{alias_number}"} where {formatCondition(condition)})"
+    # TODO vérifier avec isalpha() si Rname est une table ou une sous requête pour éviter de mettre l'alias h24
+    return f"(SELECT * from {RName} {getAlias()} where {formatCondition(condition)})"
 
 #Convertisseur pour l'opérateur PROJECT
 def pConvert(argument,RName):
-    sqlStr = f"(SELECT DISTINCT {argument} from {RName} {f"{RName}{alias_number}"})"
+    sqlStr = f"(SELECT DISTINCT {getAlias()} from {RName} {getAlias()})"
     return sqlStr
 
 #Convertisseur pour l'opérateur JOIN
-def jconvert(RName1,RName2):
-    sqlStr = f"(SELECT * FROM {RName1} {f"{RName}{alias_number}"} NATURAL JOIN {RName2} {f"{RName}{alias_number}"})"
+def jConvert(RName1,RName2):
+    sqlStr = f"(SELECT * FROM {RName1} {getAlias()} NATURAL JOIN {RName2} {getAlias()})"
     return sqlStr
 
 #Convertisseur pour l'opérateur RENAME
 # (tu devrais pas utiliser ça ? https://stackoverflow.com/questions/614238/how-can-i-rename-a-single-column-in-a-table-at-select)
 def rConvert(oldName,newName,dbFileName,RName):
     columns_name = ",".join(getDbKeys(dbFileName,RName)).replace(oldName, f"{oldName} AS {newName}")
-    sqlStr = f"(SELECT {columns_name} FROM {RName}) {f"{RName}{alias_number})"}"
+    sqlStr = f"(SELECT {columns_name} FROM {RName} {getAlias()})"
     return sqlStr
 
     # sqlStr="SELECT "
@@ -49,8 +50,8 @@ def rConvert(oldName,newName,dbFileName,RName):
     # return sqlStr
 
 #Convertisseur pour l'opérateur UNION
-def uConvert(RName1,RName2,dbFileName1):
-    if checkSameAtribute(RName1,RName2,dbFileName1):
+def uConvert(RName1,RName2,dbFileName):
+    if checkSameAtribute(RName1,RName2,dbFileName):
         sqlStr="SELECT * FROM "+RName1
         sqlStr+=" UNION "
         sqlStr+= "SELECT * FROM "+RName2
@@ -59,8 +60,8 @@ def uConvert(RName1,RName2,dbFileName1):
         pass
         #Erreur à envoyer
 #Convertisseur pour l'opérateur DIFFERENCE
-def dConvert(RName1,RName2,dbFileName1):
-    if checkSameAtribute(RName1,RName2,dbFileName1):
+def dConvert(RName1,RName2,dbFileName):
+    if checkSameAtribute(RName1,RName2,dbFileName):
         sqlStr="SELECT * FROM "+RName1
         sqlStr+=" MINUS "
         sqlStr+= "SELECT * FROM "+RName2
@@ -70,7 +71,7 @@ def dConvert(RName1,RName2,dbFileName1):
         #Erreur à envoyer
 
 #Récupère toutes les attributs/Clés d'une table
-def getDbKeys(dbFileName,RName):
+def getDbKeys(dbFileName, RName):
     con=sqlite3.connect(dbFileName)
     con.row_factory = sqlite3.Row
     attributeName=con.execute("SELECT * FROM "+RName.upper())
@@ -80,9 +81,9 @@ def getDbKeys(dbFileName,RName):
     return attributes
 
 #Verifie si tous les attribus sont les mêmes dans 2 tables
-def checkSameAtribute(RName1,RName2,dbFileName1):
-    keys1=getDbKeys(dbFileName1,RName1)
-    keys2=getDbKeys(dbFileName1,RName2)
+def checkSameAtribute(RName1,RName2,dbFileName):
+    keys1=getDbKeys(dbFileName,RName1)
+    keys2=getDbKeys(dbFileName,RName2)
 
     validity=True
     for attr in keys1:
@@ -92,6 +93,16 @@ def checkSameAtribute(RName1,RName2,dbFileName1):
         if attr not in keys1:
             validity=False
     return validity
+
+def createTable(sql):
+    con=sqlite3.connect("test.db")
+    attributeName=con.execute(f"CREATE TABLE new_table AS SELECT * FROM {sql} temp")
+    con.close()
+
+def getAlias():
+    global alias_number
+    alias_number += 1
+    return f"table{alias_number}"
 
 def termeTraductor(terme):
     if(terme.b.nature=="table"):
@@ -123,6 +134,7 @@ def termeToSJPRUD(terme):
     return value
 
 def to_sql(terme):
+    db = "test.db"
     sql = None
     match terme.nature:
         case "table":
@@ -130,15 +142,16 @@ def to_sql(terme):
         case "select":
             sql = sConvert(terme.a.a, to_sql(terme.b))
         case "rename":
-            sql = rConvert(terme.a.a, to_sql(terme.b))
+            old, new = terme.a.a.split(":")
+            sql = rConvert(old, new, db, to_sql(terme.b))
         case "project":
             sql = pConvert(terme.a.a, to_sql(terme.b))
         case "join":
             sql = jConvert(to_sql(terme.a), to_sql(terme.b))
         case "minus":
-            sql = mConvert(to_sql(terme.a), to_sql(terme.b))
+            sql = mConvert(to_sql(terme.a), to_sql(terme.b), db)
         case "union":
-            sql = uConvert(to_sql(terme.a), to_sql(terme.b))
+            sql = uConvert(to_sql(terme.a), to_sql(terme.b), db)
     return sql
 
 if __name__ == "__main__":
