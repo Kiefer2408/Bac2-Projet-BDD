@@ -1,4 +1,4 @@
-from SQL import *
+from SQL0 import *
 from Error import *
 
 class Test:
