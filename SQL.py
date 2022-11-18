@@ -1,224 +1,160 @@
-import re
-from Error import *
+import sqlite3
+import Formatter
 
-# Représente une unité de langage
-class Lexeme:
-	# les différentes natures valables sont str, modify, link, (, ) et condition
-	# Une valeur est nécessaire pour toutes les natures sauf les ()
-	# La position est utilisé par les erreurs pour indiquer la source de l'erreur
-	# à l'utilisateurs
-	def __init__(self, nature, value=None, position=-1):
-		self.nature = nature
-		self.value = value
-		self.position = position
+alias_number = 0
 
-	def __repr__(self):
-		return str(self)
+#SPJRUD
+#Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
+def formatCondition(condition):
+    condition=condition.replace(" ","")
+    allowedCondition=[">=","<=",">","<","="]
+    for operator in allowedCondition:
+        if operator in condition:
+            left=condition[:condition.index(operator)]
+            right=condition[condition.index(operator)+1:]
+            op=operator
+            break;
+    if left.isalpha():
+        left='"'+left+'"'
+    if right.isalpha():
+        right='"'+right+'"'
+    newCondition=left+op+right
+    return newCondition
 
-	def __str__(self):
-		if(self.value):
-			return f"{self.nature}:{self.value}"
-		else:
-			return self.nature
+#Convertisseur pour l'opérateur SELECT
+def sConvert(condition,RName):
+    # TODO vérifier avec isalpha() si Rname est une table ou une sous requête pour éviter de mettre l'alias h24
+    return f"(SELECT * from {RName} {getAlias()} where {formatCondition(condition)})"
 
-# représente les noeuds de l'arbre de syntaxe abstrait
-class Terme:
-	# différentes nature qui ont différents attributs:
-	# 	table : a1 = table
-	#	condition : a = condition
-	# 	select : a1 = condition, a2 = table
-	# 	project : a1 = " ", a2 = " "
-	# 	rename : a1 = " ", a2 = " "
-	# 	join : a1 = table précédente, a2 = table suivante
-	# 	minus : " "
-	# 	union : " "
-	def __init__(self, nature, a, b=None):
-		self.nature = nature
-		self.a = a
-		self.b = b
+#Convertisseur pour l'opérateur PROJECT
+def pConvert(argument,RName):
+    sqlStr = f"(SELECT DISTINCT {getAlias()} from {RName} {getAlias()})"
+    return sqlStr
 
-	def __str__(self):
-		if(self.b):
-			return f"[{self.nature}: {self.a} {self.b}]"
-		else:
-			return f"[{self.nature}: {self.a}]"
+#Convertisseur pour l'opérateur JOIN
+def jConvert(RName1,RName2):
+    sqlStr = f"(SELECT * FROM {RName1} {getAlias()} NATURAL JOIN {RName2} {getAlias()})"
+    return sqlStr
 
+#Convertisseur pour l'opérateur RENAME
+# (tu devrais pas utiliser ça ? https://stackoverflow.com/questions/614238/how-can-i-rename-a-single-column-in-a-table-at-select)
+def rConvert(oldName,newName,dbFileName,RName):
+    columns_name = ",".join(getDbKeys(dbFileName,RName)).replace(oldName, f"{oldName} AS {newName}")
+    sqlStr = f"(SELECT {columns_name} FROM {RName} {getAlias()})"
+    return sqlStr
 
-class SQL:
+    # sqlStr="SELECT "
+    # sqlStr+=",".join(getDbKeys(dbFileName,RName))
+    # sqlStr = sqlStr.replace(oldName,newName)
+    # sqlStr += " FROM "+RName.upper()
+    # return sqlStr
 
-	# Préfixe des commandes
-	prefix = "@"
+#Convertisseur pour l'opérateur UNION
+def uConvert(RName1,RName2,dbFileName):
+    if checkSameAtribute(RName1,RName2,dbFileName):
+        sqlStr="SELECT * FROM "+RName1
+        sqlStr+=" UNION "
+        sqlStr+= "SELECT * FROM "+RName2
+        return sqlStr
+    else:
+        pass
+        #Erreur à envoyer
+#Convertisseur pour l'opérateur DIFFERENCE
+def dConvert(RName1,RName2,dbFileName):
+    if checkSameAtribute(RName1,RName2,dbFileName):
+        sqlStr="SELECT * FROM "+RName1
+        sqlStr+=" MINUS "
+        sqlStr+= "SELECT * FROM "+RName2
+        return sqlStr
+    else:
+        pass
+        #Erreur à envoyer
 
-	# List des commandes disponibles (SPJRUD)
-	command = ["select", "rename", "project", "join", "union", "minus"]
+#Récupère toutes les attributs/Clés d'une table
+def getDbKeys(dbFileName, RName):
+    con=sqlite3.connect(dbFileName)
+    con.row_factory = sqlite3.Row
+    attributeName=con.execute("SELECT * FROM "+RName.upper())
+    line = attributeName.fetchone()
+    attributes=line.keys()
+    con.close()
+    return attributes
 
-	# Regex vérifiant la syntaxe des conditions des commandes select, rename et 
-	# project
-	regex = {
-			"select": "[A-Za-z0-9]+ *(=|<=|>=|<|>){1} *(\"[A-Za-z0-9]+\"|[0-9]+){1}",
-			"project": "[A-Za-z0-9]+(, *[A-Za-z0-9]+)*",
-			"rename": "[A-Za-z0-9]:[A-Za-z0-9]"
-		}
-		
+#Verifie si tous les attribus sont les mêmes dans 2 tables
+def checkSameAtribute(RName1,RName2,dbFileName):
+    keys1=getDbKeys(dbFileName,RName1)
+    keys2=getDbKeys(dbFileName,RName2)
 
-	# Convertis une chaîne de caractère en Arbre de Syntaxe Abstrait (AST)
-	def convert_to_ast(self, string):
-		self.lexeme_list = self.to_lexeme(string)
-		self.lc = self.lexeme_list[0]
-		self.t = self.expression()
-		if(self.lc.nature != "EOL"):
-			raise BadSyntaxError("ERROR SYNTAX")
-		return(self.t)
+    validity=True
+    for attr in keys1:
+        if attr not in keys2:
+            validity=False
+    for attr in keys2:
+        if attr not in keys1:
+            validity=False
+    return validity
 
+def createTable(sql, dbFileName="test.db"):
+    con=sqlite3.connect(dbFileName)
+    con.execute(f"CREATE TABLE new_table AS SELECT * FROM {sql} temp")
+    con.close()
 
-	# Convertis une chaîne de caractère en liste de Lexeme, càd elle fragmente
-	# la chaîne en unités de langage plus facile à trater
-	def to_lexeme(self, expr):
-		lexeme_list = list()
+def getAlias():
+    global alias_number
+    alias_number += 1
+    return f"table{alias_number}"
 
-		i = 0
-		while (i < len(expr)):
-			x = expr[i]
+def to_sql(terme):
+    db = "test.db"
+    sql = None
+    match terme.nature:
+        case "table":
+            sql = terme.a
+        case "select":
+            sql = sConvert(terme.a.a, to_sql(terme.b))
+        case "rename":
+            old, new = terme.a.a.split(":")
+            sql = rConvert(old, new, db, to_sql(terme.b))
+        case "project":
+            sql = pConvert(terme.a.a, to_sql(terme.b))
+        case "join":
+            sql = jConvert(to_sql(terme.a), to_sql(terme.b))
+        case "minus":
+            sql = mConvert(to_sql(terme.a), to_sql(terme.b), db)
+        case "union":
+            sql = uConvert(to_sql(terme.a), to_sql(terme.b), db)
+    return sql
 
-			# ignore les espaces
-			if(x.isspace()):
-				i += 1
-				continue
+def printTable(Rname, dbFileName="test.db"):
+    con=sqlite3.connect(dbFileName)
+    cursor=con.execute(f"SELECT * FROM {Rname}")
+    names = list(map(lambda x: x[0], cursor.description))
+    column_lenght = list()
+    for col in names:
+        longest = len(col)
+        test = con.execute(f"SELECT {col} FROM {Rname}")
+        for val in test.fetchall():
+            lenght = len(str(val[0]))
+            if lenght > longest:
+                longest = lenght
+        column_lenght.append(longest)
+    table = con.execute(f"SELECT * FROM {Rname}")
 
-			# detecte si c'est une commande ou non
-			if(x == self.prefix):
-				j = i+1
-				if(i == len(expr)-1):
-					raise UnknowCommand(self.prefix, i)
+    line = list()
+    printLine(names, column_lenght)
+    print("|".join(["—"*(x+2) for x in column_lenght]))
+    for row in table.fetchall():
+        printLine(row, column_lenght)
 
-				# récupère le nom de la commande : "@select{} A" -> "select"
-				while(expr[j].isalpha()):
-					if(j == len(expr)-1):
-						j += 1
-						break
-					j += 1
-				command = expr[i+1:j]
-
-				if(command in ["select", "rename", "project"]):
-					lexeme_list.append(Lexeme("modify", command, i))
-
-				elif(command in ["join", "union", "minus"]):
-					lexeme_list.append(Lexeme("link", command, i))
-
-				else:
-					raise UnknowCommand(command, i)
-
-				i = j-1
-
-			# detecte les chaînes de caractères
-			if(x.isalpha()):
-				j = i
-				while(expr[j].isalnum()):
-					if(j == len(expr)-1):
-						j += 1
-						break
-					j += 1
-				string = expr[i:j]
-
-				# retourne une erreur si le nom de la table est le même qu'une commande
-				if(string in self.command):
-					raise BadNameError(string, i)
-				lexeme_list.append(Lexeme("str", string, i))
-				i = j-1
-			
-			#  detecte une condition
-			if(x == "{"):
-				j = i+1
-				while(expr[j] != "}"):
-					if(j == len(expr)-1):
-						j += 1
-						break
-					j += 1
-				lexeme_list.append(Lexeme("condition", expr[i+1:j], i))
-				i = j
-
-			# detecte les parentheses
-			if(x in ["(", ")"]):
-				lexeme_list.append(Lexeme(x, None, i))
-
-			i += 1
-
-
-		lexeme_list.append(Lexeme("EOL", None, i))
-		return lexeme_list
-
-	# truc compliqué à expliquer
-	def expression(self):
-		t = self.facteur()
-		if(self.lc.nature not in [")", "link", "EOL"]):
-			raise Exception("ERROR : INVALID SYNTAX")
-		while(self.lc.nature == "link"): #JOIN UNION MINUS
-			nature = self.lc.value
-			self.next()
-			r = self.facteur()
-
-			t = Terme(nature, t, r)
-		return t
-
-	# truc compliqué à expliquer bis
-	def facteur(self):
-		match self.lc.nature:
-			case "(":
-				self.next()
-				t = self.expression()
-				if(self.lc.nature != ")"):
-					raise BadSyntaxError(f"ERROR : MISSING )")
-			case "str":
-				t = Terme("table", self.lc.value)
-			case "condition":
-				t = Terme("condition", self.lc.value)
-
-			# (, modify, condition, table, )
-			case "modify": 				#select,rename,project
-				nature = self.lc.value
-				self.next()
-				condition = self.facteur()
-				if(not condition or condition.nature != "condition"):
-					raise BadSyntaxError(condition)
-				if(not re.search(self.regex.get(nature), condition.a)):
-					raise WrongConditionSyntax(condition.a)
-				table = self.facteur()
-				if(not table or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
-					raise MissingExprError(nature)
-				return Terme(nature, condition, table)
-			case "EOL":
-				return None
-			case _:
-				raise BadSyntaxError("empty string")
-		self.next()
-		return t
-
-	# passe au lexeme suivant  @project{popu} (@rename{popu:popu} A)
-	def next(self):
-		if(self.lexeme_list.index(self.lc)+1 != len(self.lexeme_list)):
-			self.lc = self.lexeme_list[self.lexeme_list.index(self.lc)+1]
-
-	def __str__(self):
-		return self.sql
+def printLine(row, lenght):
+    line = list()
+    for i in range(len(row)):
+        col = row[i]
+        x = f"{col:<{lenght[i]}}"
+        line.append(f"{x:^{lenght[i]+2}}")
+    line = "|".join(line)
+    print(line)
 
 if __name__ == "__main__":
-	sql = SQL()
-	print(type(sql.convert_to_ast("@project[{Population}A")))
-	print(sql.convert_to_ast("@project[{Population}A"))
-	string="@project[{Population}A"
-	a=sql.to_lexeme(string)
-	#for i in range(len(a)):
-		#print(a[i].Terme())
-	while True:
-		x = input("SPJRUD >>")
-		if(x == "@exit"):
-			break
-		try:
-			print(sql.convert_to_ast(x))
-		except Exception as e:
-			print("\033[93m" + str(e) + "\033[0m")
-
-
-	# SQL("select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")
-	# SQL("@project{Population} ((@rename{Name:Capital} Cities) @join (@select{Country=\"Mali\"} CC))")
-	# SQL("A @join B @join C")
+    sql=SQL.SQL()
+    printTable("A")

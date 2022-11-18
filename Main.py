@@ -1,8 +1,8 @@
 import os
 import traceback
 from Input import *
-from SQL import *
-from Convert import to_sql, createTable
+from Formatter import *
+from SQL import to_sql, createTable
 
 debug = True
 HISTORY_FILE = os.path.expanduser('~/.history')
