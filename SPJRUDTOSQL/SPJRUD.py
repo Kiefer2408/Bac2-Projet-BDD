@@ -1,7 +1,7 @@
 import sqlite3
 import os
-from Error import *
-import Formatter
+from SPJRUDTOSQL import Error
+from SPJRUDTOSQL import Formatter
 # SPJRUD
 # Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 class SPJRUD:
@@ -158,16 +158,16 @@ class SPJRUD:
                 sql = self.uConvert(self.to_sql(terme.a), self.to_sql(terme.b))
         return sql
     def sqlTraductor(self,string):
-        formatter = Formatter()
+        formatter = Formatter.Formatter()
         return self.to_sql(formatter.convert_to_ast(string))
 
 
     #Vérifie si la base de donnée existe dans le répétoire renvoie une erreur si non
     def checkDbValidity(self):
         if(self.dbFileName==0):
-            raise NoDatabaseException()
+            raise Error.NoDatabaseException()
         elif(os.path.exists(f'{self.dbFileName}.db')):
             return True
         else:
-            raise WrongDatabaseFileName()
+            raise Error.WrongDatabaseFileName()
 

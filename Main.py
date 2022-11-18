@@ -1,7 +1,7 @@
 import traceback
 from Input import *
 from SPJRUDTOSQL.SPJRUD import *
-
+from SPJRUDTOSQL.Error import *
 debug = False
 
 HISTORY_FILE = os.path.expanduser('~/.history')
@@ -26,8 +26,8 @@ if __name__ == "__main__":
 				case "@clear":
 					os.system('clear')
 				case "@use":
-					if os.path.exists(f'{spjrud.dbFileName}.db'):
-						dbName = spt[1]
+					dbName = spt[1]
+					if os.path.exists(f'{dbName}.db'):
 						spjrud = SPJRUD(dbName)
 						print("\033[92mDatabase Found\x1b[0m")
 					else:
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 						table=spt[1]
 					spjrud.printTable(spjrud.sqlTraductor(table))
 				case _:
-					print(spjrud.sqlTraductor(sql_request))
+					print(spjrud.sqlTraductor(x))
 					
 
 		# Quitte l'interpréteur SPJRUD lorsqu'une EOFError est capturée

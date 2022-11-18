@@ -1,5 +1,5 @@
 import re
-from Error import *
+from SPJRUDTOSQL import Error
 
 # Représente une unité de langage
 class Lexeme:
@@ -66,7 +66,7 @@ class Formatter:
 		self.lc = self.lexeme_list[0]
 		self.t = self.expression()
 		if(self.lc.nature != "EOL"):
-			raise BadSyntaxError("ERROR SYNTAX")
+			raise Error.BadSyntaxError("ERROR SYNTAX")
 		return(self.t)
 
 
@@ -88,7 +88,7 @@ class Formatter:
 			if(x == self.prefix):
 				j = i+1
 				if(i == len(expr)-1):
-					raise UnknowCommand(self.prefix, i)
+					raise Error.UnknowCommand(self.prefix, i)
 
 				# récupère le nom de la commande : "@select{} A" -> "select"
 				while(expr[j].isalpha()):
@@ -104,7 +104,7 @@ class Formatter:
 				elif(command in ["join", "union", "minus"]):
 					lexeme_list.append(Lexeme("link", command, i))
 				else:
-					raise UnknowCommand(command, i)
+					raise Error.UnknowCommand(command, i)
 
 				i = j-1
 
@@ -120,7 +120,7 @@ class Formatter:
 
 				# retourne une erreur si le nom de la table est le même qu'une commande
 				if(string in self.command):
-					raise BadNameError(string, i)
+					raise Error.BadNameError(string, i)
 				lexeme_list.append(Lexeme("str", string, i))
 				i = j-1
 			#  detecte une condition
@@ -163,7 +163,7 @@ class Formatter:
 				self.next()
 				t = self.expression()
 				if(self.lc.nature != ")"):
-					raise BadSyntaxError(f"ERROR : MISSING )")
+					raise Error.BadSyntaxError(f"ERROR : MISSING )")
 			case "str":
 				t = Terme("table", self.lc.value)
 			case "condition":
@@ -175,18 +175,18 @@ class Formatter:
 				self.next()
 				condition = self.facteur()
 				if(not condition or condition.nature != "condition"):
-					raise BadSyntaxError(condition)
+					raise Error.BadSyntaxError(condition)
 				if(not re.search(self.regex.get(nature), condition.a)):
-					raise WrongConditionSyntax(condition.a)
+					raise Error.WrongConditionSyntax(condition.a)
 				table = self.facteur()
 
 				if(not table or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
-					raise MissingExprError(nature)
+					raise Error.MissingExprError(nature)
 				return Terme(nature, condition, table)
 			case "EOL":
 				return None
 			case _:
-				raise BadSyntaxError("empty string")
+				raise Error.BadSyntaxError("empty string")
 		self.next()
 		return t
 
