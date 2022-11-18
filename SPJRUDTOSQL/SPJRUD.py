@@ -1,13 +1,16 @@
 import sqlite3
 import os
 from Error import *
+import Formatter
 # SPJRUD
 # Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
-class SQL:
+class SPJRUD:
 
     def __init__(self, DbFileName=0):
         self.dbFileName = DbFileName
         self.alias_number = 0
+
+    #vérifie si il y a une chaine de caractère dans la condition si oui : rajoute des guillemets autour de la chaine EMPLOYÉE>2 -> "EMPLOYE">2
     def formatCondition(self, condition):
         condition = condition.replace(" ", "")
         allowedCondition = [">=", "<=", ">", "<", "="]
@@ -42,25 +45,18 @@ class SQL:
         return sqlStr
 
     # Convertisseur pour l'opérateur RENAME
-    # (tu devrais pas utiliser ça ? https://stackoverflow.com/questions/614238/how-can-i-rename-a-single-column-in-a-table-at-select)
     def rConvert(self, oldName, newName, RName):
         columns_name = ",".join(self.getDbKeys( RName)).replace(oldName, f"{oldName} AS {newName}")
         sqlStr = f"(SELECT {columns_name} FROM {RName} {self.getAlias()})"
         return sqlStr
-
-        # sqlStr="SELECT "
-        # sqlStr+=",".join(getDbKeys(dbFileName,RName))
-        # sqlStr = sqlStr.replace(oldName,newName)
-        # sqlStr += " FROM "+RName.upper()
-        # return sqlStr
 
     # Convertisseur pour l'opérateur UNION
     def uConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
             sqlStr = f"(SELECT * FROM {RName1}) UNION  (SELECT * FROM {RName2}) "
             return sqlStr
-
-            # Erreur à envoyer
+        else:
+            raise NotSameAttribute("UNION")
 
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
@@ -68,17 +64,19 @@ class SQL:
             sqlStr = f"(SELECT * FROM {RName1}) MINUS (SELECT * FROM {RName2})"
             return sqlStr
         else:
-            raise NotSameAttribute("Difference")
+            raise NotSameAttribute("DIFFERNCE/MINUS")
 
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
-        con = sqlite3.connect(f"{self.dbFileName}.db")
-        con.row_factory = sqlite3.Row
-        attributeName = con.execute("SELECT * FROM " + RName.upper())
-        line = attributeName.fetchone()
-        attributes = line.keys()
-        con.close()
-        return attributes
+        if(self.checkDbValidity()):
+            con = sqlite3.connect(f"{self.dbFileName}.db")
+            con.row_factory = sqlite3.Row
+            attributeName = con.execute("SELECT * FROM " + RName.upper())
+            line = attributeName.fetchone()
+            attributes = line.keys()
+            con.close()
+            return attributes
+
 
     # Verifie si tous les attribus sont les mêmes dans 2 tables
     def checkSameAtribute(self, RName1, RName2):
@@ -93,7 +91,9 @@ class SQL:
                 validity = False
         return validity
 
+    #Affiche la relation Rname sous forme de tableau
     def printTable(self,Rname):
+        self.checkDbValidity()
         con=sqlite3.connect(f"{self.dbFileName}.db")
         cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
         names = list(map(lambda x: x[0], cursor.description))
@@ -115,7 +115,7 @@ class SQL:
             self.printLine(row, column_lenght)
         print("\n")
         con.close()
-
+    #Affiche une ligne row, de la relation, de longueur lenght
     def printLine(self,row, lenght):
         line = list()
         for i in range(len(row)):
@@ -125,15 +125,19 @@ class SQL:
         line = "|".join(line)
         print(line)
 
+    #Crée une table à partir d'une requete sql
     def createTable(self,tableName, sqlRequest):
+        self.checkDbValidity()
         con = sqlite3.connect(f"{self.dbFileName}.db")
         con.execute(f"CREATE TABLE {tableName} AS SELECT * FROM {sqlRequest} temp")
         con.close()
 
+    #Retourne le string table en incrémentant à chaque appel : permet de creer des alias de table afin d'utiliser des sous requêtes
     def getAlias(self):
         self.alias_number += 1
         return f"table{self.alias_number}"
 
+    #Fonction récusive traduisant un terme en sql
     def to_sql(self, terme):
         sql = None
         match terme.nature:
@@ -153,9 +157,17 @@ class SQL:
             case "union":
                 sql = self.uConvert(self.to_sql(terme.a), self.to_sql(terme.b))
         return sql
+    def sqlTraductor(self,string):
+        formatter = Formatter()
+        return self.to_sql(formatter.convert_to_ast(string))
 
 
+    #Vérifie si la base de donnée existe dans le répétoire renvoie une erreur si non
     def checkDbValidity(self):
-        if(os.path.exists(f'{self.dbFileName}.db')):
+        if(self.dbFileName==0):
+            raise NoDatabaseException()
+        elif(os.path.exists(f'{self.dbFileName}.db')):
             return True
+        else:
+            raise WrongDatabaseFileName()
 

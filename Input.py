@@ -10,10 +10,6 @@ class Input:
 			if(len(x) > 0):
 				return x
 
-	# affiche un message dans la console
-	def print(self, string):
-		print(content)
-
 	# affiche une erreur dans la console
 	def print_warning(self, name, desc = None):
 		if(not desc):

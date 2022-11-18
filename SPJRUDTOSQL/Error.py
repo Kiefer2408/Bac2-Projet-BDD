@@ -36,5 +36,10 @@ class MissingExprError(CustomError):
 		super().__init__("Missing expression", desc, position)
 class NotSameAttribute(CustomError):
 	def __init__(self,desc=None,position=None):
-		super().__init__("Not same attribute")
-
+		super().__init__("Not same attribute for",desc,position)
+class WrongDatabaseFileName(CustomError):
+	def __init__(self,desc="Database must be in the same file and must be a file.db",position=None):
+		super().__init__("WrongFileName for the Database ", desc, position)
+class NoDatabaseException(CustomError):
+	def __init__(self,desc=None,position=None):
+		super().__init__("No Database found, add it with @use database_name",desc,position)
