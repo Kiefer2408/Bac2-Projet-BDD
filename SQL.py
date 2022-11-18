@@ -45,7 +45,7 @@ class SQL:
 
     # Convertisseur pour l'opérateur RENAME
     # (tu devrais pas utiliser ça ? https://stackoverflow.com/questions/614238/how-can-i-rename-a-single-column-in-a-table-at-select)
-    def rConvert(self, oldName, newName, dbFileName, RName):
+    def rConvert(self, oldName, newName, RName):
         columns_name = ",".join(self.getDbKeys( RName)).replace(oldName, f"{oldName} AS {newName}")
         sqlStr = f"(SELECT {columns_name} FROM {RName} {self.getAlias()})"
         return sqlStr
@@ -61,8 +61,7 @@ class SQL:
         if self.checkSameAtribute(RName1, RName2):
             sqlStr = f"(SELECT * FROM {RName1}) UNION  (SELECT * FROM {RName2}) "
             return sqlStr
-        else:
-            pass
+
             # Erreur à envoyer
 
     # Convertisseur pour l'opérateur DIFFERENCE
@@ -110,7 +109,6 @@ class SQL:
         return f"table{alias_number}"
 
     def to_sql(self, terme):
-        db = "test.db"
         sql = None
         match terme.nature:
             case "table":
@@ -119,15 +117,15 @@ class SQL:
                 sql = self.sConvert(terme.a.a, self.to_sql(terme.b))
             case "rename":
                 old, new = terme.a.a.split(":")
-                sql = self.rConvert(old, new, db, self.to_sql(terme.b))
+                sql = self.rConvert(old, new, self.to_sql(terme.b))
             case "project":
                 sql = self.pConvert(terme.a.a, self.to_sql(terme.b))
             case "join":
                 sql = self.jConvert(self.to_sql(terme.a), self.to_sql(terme.b))
             case "minus":
-                sql = self.dConvert(self.to_sql(terme.a), self.to_sql(terme.b), db)
+                sql = self.dConvert(self.to_sql(terme.a), self.to_sql(terme.b))
             case "union":
-                sql = self.uConvert(self.to_sql(terme.a), self.to_sql(terme.b), db)
+                sql = self.uConvert(self.to_sql(terme.a), self.to_sql(terme.b))
         return sql
 
 
