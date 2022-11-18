@@ -20,3 +20,6 @@ class Input:
 			print(f"\033[93m{name}\033[0m")
 		else:
 			print(f"\033[93m{name}\n{desc}\033[0m")
+
+	def print_success(self, msg):
+		print(f"\033[92m{msg}\033[0m")

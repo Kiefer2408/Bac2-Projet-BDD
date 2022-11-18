@@ -3,6 +3,7 @@ import traceback
 from Input import *
 from SQL import *
 from Formatter import *
+from Error import *
 debug = True
 
 HISTORY_FILE = os.path.expanduser('~/.history')
@@ -36,25 +37,27 @@ if __name__ == "__main__":
 				case "@create":
 					tableName = spt[1]
 					sql_request = spt[2]
-					sql.createTable(tableName, sql_request)
+					sql.createTable(tableName, sql.to_sql(formatter.convert_to_ast(sql_request)))
+					inp.print_success("Table succesfully created")
 				case "@print":
 					if(len(spt)>2):
 						table=f"{spt[1]} {spt[2]}"
 					else:
 						table=spt[1]
-					sql.printTable(table)
+					sql.printTable(sql.to_sql(formatter.convert_to_ast(table)))
 				case _:
-					try:
-						ast = formatter.convert_to_ast(x)
-						print(ast)
-						sql_request = sql.to_sql(ast)
-						print(sql_request)
-					except Exception as e:
-						if(debug):
-							print(traceback.format_exc())
-						print("\033[93m" + str(e) + "\033[0m")
+					ast = formatter.convert_to_ast(x)
+					print(ast)
+					sql_request = sql.to_sql(ast)
+					print(sql_request)
+					
 
 		# Quitte l'interpréteur SPJRUD lorsqu'une EOFError est capturée
 		except (EOFError, KeyboardInterrupt):
 			print("\nGoodbye !")
 			exit(0)
+
+		except CustomError as e:
+			if(debug):
+				print(traceback.format_exc())
+			print("\033[93m" + str(e) + "\033[0m")

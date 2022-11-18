@@ -13,15 +13,14 @@ class SQL:
         allowedCondition = [">=", "<=", ">", "<", "="]
         for operator in allowedCondition:
             if operator in condition:
-                left = condition[:condition.index(operator)]
-                right = condition[condition.index(operator) + 1:]
+                left, right = condition.split(operator)
                 op = operator
                 break;
         if left.isalpha():
-            left = '"' + left + '"'
+            left = f'"{left}"'
         if right.isalpha():
-            right = '"' + right + '"'
-        newCondition = left + op + right
+            right = f'"{right}"'
+        newCondition = f"{left}{op}{right}"
         return newCondition
 
     # Convertisseur pour l'opérateur SELECT
