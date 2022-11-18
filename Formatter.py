@@ -7,8 +7,6 @@ class Lexeme:
 	# Une valeur est nécessaire pour toutes les natures sauf les ()
 	# La position est utilisé par les erreurs pour indiquer la source de l'erreur
 	# à l'utilisateurs
-
-
 	def __init__(self, nature, value=None, position=-1):
 		self.nature = nature
 		self.value = value
@@ -22,7 +20,6 @@ class Lexeme:
 			return f"{self.nature}:{self.value}"
 		else:
 			return self.nature
-
 
 # représente les noeuds de l'arbre de syntaxe abstrait
 class Terme:
@@ -46,8 +43,7 @@ class Terme:
 		else:
 			return f"[{self.nature}: {self.a}]"
 
-
-class SQL:
+class Formatter:
 
 	# Préfixe des commandes
 	prefix = "@"
@@ -74,7 +70,6 @@ class SQL:
 		return(self.t)
 
 
-
 	# Convertis une chaîne de caractère en liste de Lexeme, càd elle fragmente
 	# la chaîne en unités de langage plus facile à trater
 	def to_lexeme(self, expr):
@@ -96,13 +91,11 @@ class SQL:
 					raise UnknowCommand(self.prefix, i)
 
 				# récupère le nom de la commande : "@select{} A" -> "select"
-
 				while(expr[j].isalpha()):
 					if(j == len(expr)-1):
 						j += 1
 						break
 					j += 1
-
 				command = expr[i+1:j]
 
 				if(command in ["select", "rename", "project"]):
@@ -130,7 +123,6 @@ class SQL:
 					raise BadNameError(string, i)
 				lexeme_list.append(Lexeme("str", string, i))
 				i = j-1
-
 			#  detecte une condition
 			if(x == "{"):
 				j = i+1
@@ -207,11 +199,11 @@ class SQL:
 		return self.sql
 
 if __name__ == "__main__":
-	sql = SQL()
-	print(type(sql.convert_to_ast("@project[{Population}A")))
-	print(sql.convert_to_ast("@project[{Population}A"))
+	formatter = Formatter()
+	print(type(formatter.convert_to_ast("@project[{Population}A")))
+	print(formatter.convert_to_ast("@project[{Population}A"))
 	string="@project[{Population}A"
-	a=sql.to_lexeme(string)
+	a=formatter.to_lexeme(string)
 	#for i in range(len(a)):
 		#print(a[i].Terme())
 	while True:
@@ -219,7 +211,7 @@ if __name__ == "__main__":
 		if(x == "@exit"):
 			break
 		try:
-			print(sql.convert_to_ast(x))
+			print(formatter.convert_to_ast(x))
 		except Exception as e:
 			print("\033[93m" + str(e) + "\033[0m")
 

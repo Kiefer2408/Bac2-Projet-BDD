@@ -1,6 +1,5 @@
 from Formatter import *
 from Error import *
-
 class Test:
 
 	def __init__(self):
