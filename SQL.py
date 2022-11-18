@@ -1,6 +1,6 @@
 import sqlite3
-
-
+import os
+from Error import *
 # SPJRUD
 # Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 class SQL:
@@ -18,9 +18,9 @@ class SQL:
                 op = operator
                 break;
         if left.isalpha():
-            left = '"' + left + '"'
+            left = f"\"{left}\""
         if right.isalpha():
-            right = '"' + right + '"'
+            right = f"\"{right}\""
         newCondition = left + op + right
         return newCondition
 
@@ -67,8 +67,7 @@ class SQL:
             sqlStr = f"(SELECT * FROM {RName1}) MINUS (SELECT * FROM {RName2})"
             return sqlStr
         else:
-            pass
-            # Erreur à envoyer
+            raise NotSameAttribute("Difference")
 
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
@@ -153,3 +152,9 @@ class SQL:
             case "union":
                 sql = self.uConvert(self.to_sql(terme.a), self.to_sql(terme.b))
         return sql
+
+
+    def checkDbValidity(self):
+        if(os.path.exists(f'{self.dbFileName}.db')):
+            return True
+

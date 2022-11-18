@@ -34,4 +34,7 @@ class WrongConditionSyntax(CustomError):
 class MissingExprError(CustomError):
 	def __init__(self, desc=None, position=None):
 		super().__init__("Missing expression", desc, position)
+class NotSameAttribute(CustomError):
+	def __init__(self,desc=None,position=None):
+		super().__init__("Not same attribute")
 
