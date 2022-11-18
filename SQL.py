@@ -1,5 +1,5 @@
 import sqlite3
-import SQL0
+import Formatter
 #SPJRUD
 #Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 def formatCondition(condition):

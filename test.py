@@ -1,4 +1,4 @@
-from SQL0 import *
+from Formatter import *
 from Error import *
 
 class Test:
