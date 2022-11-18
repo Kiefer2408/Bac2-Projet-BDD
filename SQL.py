@@ -93,26 +93,28 @@ class SQL:
                 validity = False
         return validity
 
-    def printTable(self,Rname, dbFileName="test.db"):
-        con=sqlite3.connect(dbFileName)
-        cursor=con.execute(f"SELECT * FROM {Rname}")
+    def printTable(self,Rname):
+        con=sqlite3.connect(f"{self.dbFileName}.db")
+        cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
         names = list(map(lambda x: x[0], cursor.description))
         column_lenght = list()
         for col in names:
             longest = len(col)
-            test = con.execute(f"SELECT {col} FROM {Rname}")
+            test = con.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
             for val in test.fetchall():
                 lenght = len(str(val[0]))
                 if lenght > longest:
                     longest = lenght
             column_lenght.append(longest)
-        table = con.execute(f"SELECT * FROM {Rname}")
+        table = con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
 
         line = list()
         self.printLine(names, column_lenght)
         print("|".join(["—"*(x+2) for x in column_lenght]))
         for row in table.fetchall():
             self.printLine(row, column_lenght)
+        print("\n")
+        con.close()
 
     def printLine(self,row, lenght):
         line = list()

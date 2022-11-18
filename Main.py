@@ -19,6 +19,7 @@ if __name__ == "__main__":
 	while isrunning:
 		try:
 			x = inp.read()
+			readline.write_history_file()
 			spt = x.split(" ", 2)
 			match spt[0]:
 				case "@exit":
@@ -36,6 +37,12 @@ if __name__ == "__main__":
 					tableName = spt[1]
 					sql_request = spt[2]
 					sql.createTable(tableName, sql_request)
+				case "@print":
+					if(len(spt)>2):
+						table=f"{spt[1]} {spt[2]}"
+					else:
+						table=spt[1]
+					sql.printTable(table)
 				case _:
 					try:
 						ast = formatter.convert_to_ast(x)
