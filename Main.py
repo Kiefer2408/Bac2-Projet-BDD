@@ -16,26 +16,29 @@ if __name__ == "__main__":
 	while isrunning:
 		try:
 			x = inp.read()
-			match x:
+			spt = x.split(" ", 2)
+			match spt[0]:
 				case "@exit":
 					isrunning = False
 				case "@clear":
 					os.system('clear')
 				case "@use":
-					dbName = inp.read("\033[96mUSE >>\x1b[0m")
+					dbName = spt[1]
 					sql = SQL(dbName)
-
 					if os.path.exists(f'{dbName}.db'):
 						print("\033[92mDatabase Found\x1b[0m")
 					else:
 						print("\033[31mDatabase not found\x1b[0m")
+				case "@create":
+					tableName = spt[1]
+					sql_request = spt[2]
+					sql.createTable(tableName, sql_request)
 				case _:
 					try:
-						print(x)
 						ast = formatter.convert_to_ast(x)
 						print(ast)
-						sql = SQL.to_sql(ast)
-						print(sql)
+						sql_request = sql.to_sql(ast)
+						print(sql_request)
 					except Exception as e:
 						if(debug):
 							print(traceback.format_exc())
