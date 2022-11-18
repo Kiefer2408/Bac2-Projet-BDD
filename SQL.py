@@ -113,7 +113,7 @@ class SQL:
 			# detecte les chaînes de caractères
 			if(x.isalpha()):
 				j = i
-				while(expr[j].isalpha()):
+				while(expr[j].isalnum()):
 					if(j == len(expr)-1):
 						j += 1
 						break

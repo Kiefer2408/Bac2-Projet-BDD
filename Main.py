@@ -5,6 +5,9 @@ from SQL import *
 from Convert import to_sql, createTable
 
 debug = True
+HISTORY_FILE = os.path.expanduser('~/.history')
+if os.path.exists(HISTORY_FILE):
+    readline.read_history_file(HISTORY_FILE)
 
 if __name__ == "__main__":
 	isrunning = True
@@ -15,6 +18,7 @@ if __name__ == "__main__":
 	while isrunning:
 		try:
 			x = inp.read()
+			readline.write_history_file()
 			match x:
 				case "@exit":
 					isrunning = False
