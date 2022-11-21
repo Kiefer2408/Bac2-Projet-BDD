@@ -1,22 +1,37 @@
 import traceback
 from Input import *
+from configparser import ConfigParser
 from SPJRUDTOSQL.SPJRUD import *
 from SPJRUDTOSQL.Error import *
+
 debug = False
+config = ConfigParser(allow_no_value=True)
 
 HISTORY_FILE = os.path.expanduser('~/.history')
+CONFIG_FILE = os.path.expanduser('config.ini')
+
 if os.path.exists(HISTORY_FILE):
-    readline.read_history_file(HISTORY_FILE)
+	readline.read_history_file(HISTORY_FILE)
 
 if __name__ == "__main__":
 	isrunning = True
 
 	inp = Input()
-	spjrud=SPJRUD()
+	config.read(CONFIG_FILE)
+	if(config.has_option("main", "dbName")):
+		spjrud = SPJRUD(config.get("main", "dbName"))
+	else:
+		config.add_section("main")
+		with open(CONFIG_FILE, 'w') as f:
+			config.write(f)
+
+		spjrud=SPJRUD()
+
 	os.system('clear')
+
 	while isrunning:
 		try:
-			x = inp.read()
+			x = inp.read(spjrud.dbFileName)
 			readline.write_history_file()
 			spt = x.split(" ", 2)
 
@@ -28,6 +43,11 @@ if __name__ == "__main__":
 				case "@use":
 					dbName = spt[1]
 					if os.path.exists(f'{dbName}.db'):
+
+						config.set("main", "dbname", dbName)
+						with open(CONFIG_FILE, 'w') as f:
+							config.write(f)
+
 						spjrud = SPJRUD(dbName)
 						print("\033[92mDatabase Found\x1b[0m")
 					else:

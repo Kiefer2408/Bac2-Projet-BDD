@@ -6,7 +6,7 @@ from SPJRUDTOSQL import Formatter
 # Formatte une condition pour la rendre "acceptaple en sql" : Rajoute des ' autour des string, Prend en paramètre un element de [">=","<=","<",">","="]
 class SPJRUD:
 
-    def __init__(self, DbFileName=0):
+    def __init__(self, DbFileName=None):
         self.dbFileName = DbFileName
         self.alias_number = 0
 

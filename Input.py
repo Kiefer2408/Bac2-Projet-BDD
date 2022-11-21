@@ -2,11 +2,11 @@ import readline
 
 class Input:
 
-	DEFAULT_DISP = "SPJRUD >> "
+	DEFAULT_DISP = "SPJRUD[{}] >> "
 
-	def read(self, content = DEFAULT_DISP):
+	def read(self, dbName = "None"):
 		while True:
-			x = input(content)
+			x = input(self.DEFAULT_DISP.format(dbName))
 			if(len(x) > 0):
 				return x
 
