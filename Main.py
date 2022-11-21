@@ -47,9 +47,7 @@ if __name__ == "__main__":
 					sql.printTable(sql.to_sql(formatter.convert_to_ast(table)))
 				case _:
 					ast = formatter.convert_to_ast(x)
-					print(ast)
 					sql_request = sql.to_sql(ast)
-					print(sql_request)
 					
 
 		# Quitte l'interpréteur SPJRUD lorsqu'une EOFError est capturée
