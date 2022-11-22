@@ -56,7 +56,7 @@ class SPJRUD:
             sqlStr = f"(SELECT * FROM {RName1}) UNION  (SELECT * FROM {RName2}) "
             return sqlStr
         else:
-            raise NotSameAttribute("UNION")
+            raise Error.NotSameAttribute("UNION")
 
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
@@ -64,7 +64,7 @@ class SPJRUD:
             sqlStr = f"(SELECT * FROM {RName1}) MINUS (SELECT * FROM {RName2})"
             return sqlStr
         else:
-            raise NotSameAttribute("DIFFERNCE/MINUS")
+            raise Error.NotSameAttribute("DIFFERNCE/MINUS")
 
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
