@@ -66,7 +66,7 @@ class SPJRUD:
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} MINUS SELECT * FROM {RName2} {self.getAlias()})"
+            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} EXCEPT SELECT * FROM {RName2} {self.getAlias()})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("DIFFERENCE/MINUS")
