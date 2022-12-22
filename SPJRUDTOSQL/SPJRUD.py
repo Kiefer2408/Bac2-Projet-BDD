@@ -99,6 +99,7 @@ class SPJRUD:
         self.checkDbValidity()
         try:
             con=sqlite3.connect(f"{self.dbFileName}.db")
+            print(f"SELECT * FROM {Rname} {self.getAlias()}")
             cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
             names = list(map(lambda x: x[0], cursor.description))
             column_lenght = list()
@@ -120,7 +121,7 @@ class SPJRUD:
             print("\n")
             con.close()
         except sqlite3.OperationalError:
-            raise Error.NoDatabaseException
+            raise Error.NoDatabaseException()
 
 
     #Affiche une ligne row, de la relation, de longueur lenght
