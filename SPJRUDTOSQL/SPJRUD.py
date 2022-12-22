@@ -56,7 +56,9 @@ class SPJRUD:
     # Convertisseur pour l'opérateur UNION
     def uConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1} UNION SELECT * FROM {RName2})"
+
+            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} UNION SELECT * FROM {RName2} {self.getAlias()})"
+
             return sqlStr
         else:
             raise Error.NotSameAttribute("UNION")
@@ -64,7 +66,8 @@ class SPJRUD:
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1} MINUS SELECT * FROM {RName2})"
+
+            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} MINUS SELECT * FROM {RName2} {self.getAlias()})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("DIFFERNCE/MINUS")
@@ -72,14 +75,16 @@ class SPJRUD:
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
         if(self.checkDbValidity()):
-            con = sqlite3.connect(f"{self.dbFileName}.db")
-            con.row_factory = sqlite3.Row
-            attributeName = con.execute("SELECT * FROM " + RName.upper())
-            line = attributeName.fetchone()
-            attributes = line.keys()
-            con.close()
-            return attributes
-
+            try:
+                con = sqlite3.connect(f"{self.dbFileName}.db")
+                con.row_factory = sqlite3.Row
+                attributeName = con.execute("SELECT * FROM " + RName.upper())
+                line = attributeName.fetchone()
+                attributes = line.keys()
+                con.close()
+                return attributes
+            except sqlite3.OperationalError:
+                raise Error.WrongNameException()
 
     # Verifie si tous les attribus sont les mêmes dans 2 tables
     def checkSameAtribute(self, RName1, RName2):
@@ -122,7 +127,7 @@ class SPJRUD:
             print("\n")
             cursor.close()
         except sqlite3.OperationalError:
-            raise Error.NoDatabaseException()
+            raise Error.WrongNameException()
 
 
     #Affiche une ligne row, de la relation, de longueur lenght
