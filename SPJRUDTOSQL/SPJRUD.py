@@ -56,7 +56,7 @@ class SPJRUD:
     # Convertisseur pour l'opérateur UNION
     def uConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1}) UNION  (SELECT * FROM {RName2}) "
+            sqlStr = f"(SELECT * FROM {RName1} UNION SELECT * FROM {RName2})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("UNION")
@@ -64,7 +64,7 @@ class SPJRUD:
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1}) MINUS (SELECT * FROM {RName2})"
+            sqlStr = f"(SELECT * FROM {RName1} MINUS SELECT * FROM {RName2})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("DIFFERNCE/MINUS")
@@ -98,20 +98,21 @@ class SPJRUD:
     def printTable(self,Rname):
         self.checkDbValidity()
         try:
-            con=sqlite3.connect(f"{self.dbFileName}.db")
+            conn=sqlite3.connect(f"{self.dbFileName}.db")
+            cursor=conn.cursor()
             print(f"SELECT * FROM {Rname} {self.getAlias()}")
-            cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
-            names = list(map(lambda x: x[0], cursor.description))
+            request=cursor.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
+            names = list(map(lambda x: x[0], request.description))
             column_lenght = list()
             for col in names:
                 longest = len(col)
-                test = con.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
+                test = cursor.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
                 for val in test.fetchall():
                     lenght = len(str(val[0]))
                     if lenght > longest:
                         longest = lenght
                 column_lenght.append(longest)
-            table = con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
+            table = cursor.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
 
             line = list()
             self.printLine(names, column_lenght)
@@ -119,7 +120,7 @@ class SPJRUD:
             for row in table.fetchall():
                 self.printLine(row, column_lenght)
             print("\n")
-            con.close()
+            cursor.close()
         except sqlite3.OperationalError:
             raise Error.NoDatabaseException()
 
