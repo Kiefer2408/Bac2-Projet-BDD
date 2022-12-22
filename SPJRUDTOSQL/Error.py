@@ -43,3 +43,6 @@ class WrongDatabaseFileName(CustomError):
 class NoDatabaseException(CustomError):
 	def __init__(self,desc=None,position=None):
 		super().__init__("No Database found, add it with @use database_name",desc,position)
+class WrongNameException(CustomError):
+	def __init__(self,desc=None,position=None):
+		super().__init__("This name of key doesn't exist",desc,position)

@@ -46,6 +46,9 @@ class SPJRUD:
 
     # Convertisseur pour l'opérateur RENAME
     def rConvert(self, oldName, newName, RName):
+        if(oldName not in self.getDbKeys(RName)):
+            raise Error.WrongNameException
+
         columns_name = ",".join(self.getDbKeys( RName)).replace(oldName, f"{oldName} AS {newName}")
         sqlStr = f"(SELECT {columns_name} FROM {RName} {self.getAlias()})"
         return sqlStr
@@ -94,28 +97,32 @@ class SPJRUD:
     #Affiche la relation Rname sous forme de tableau
     def printTable(self,Rname):
         self.checkDbValidity()
-        self.checkTableValidity()
-        con=sqlite3.connect(f"{self.dbFileName}.db")
-        cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
-        names = list(map(lambda x: x[0], cursor.description))
-        column_lenght = list()
-        for col in names:
-            longest = len(col)
-            test = con.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
-            for val in test.fetchall():
-                lenght = len(str(val[0]))
-                if lenght > longest:
-                    longest = lenght
-            column_lenght.append(longest)
-        table = con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
+        try:
+            con=sqlite3.connect(f"{self.dbFileName}.db")
+            cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
+            names = list(map(lambda x: x[0], cursor.description))
+            column_lenght = list()
+            for col in names:
+                longest = len(col)
+                test = con.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
+                for val in test.fetchall():
+                    lenght = len(str(val[0]))
+                    if lenght > longest:
+                        longest = lenght
+                column_lenght.append(longest)
+            table = con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
 
-        line = list()
-        self.printLine(names, column_lenght)
-        print("|".join(["—"*(x+2) for x in column_lenght]))
-        for row in table.fetchall():
-            self.printLine(row, column_lenght)
-        print("\n")
-        con.close()
+            line = list()
+            self.printLine(names, column_lenght)
+            print("|".join(["—"*(x+2) for x in column_lenght]))
+            for row in table.fetchall():
+                self.printLine(row, column_lenght)
+            print("\n")
+            con.close()
+        except sqlite3.OperationalError:
+            raise Error.NoDatabaseException
+
+
     #Affiche une ligne row, de la relation, de longueur lenght
     def printLine(self,row, lenght):
         line = list()
@@ -171,9 +178,4 @@ class SPJRUD:
             return True
         else:
             raise Error.WrongDatabaseFileName()
-    def checkTableValidity(self):
-        if(os.path.exists(f"{self.dbFileName}.db")):
-            return True
-        else:
-            raise Error.NoDatabaseException()
 
