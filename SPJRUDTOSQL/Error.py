@@ -14,7 +14,6 @@ class CustomError(Exception):
 # Erreur générique, lancée quand une erreur de syntaxe est détectée
 class BadSyntaxError(CustomError):
 	def __init__(self, expr, desc=None, position=None):
-		super().__init__(expr, "Bad syntax", desc, position)
 
 # Est lancée quand le nom d'une table est invalide
 class InvalidNameError(CustomError):
