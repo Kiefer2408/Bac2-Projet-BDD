@@ -179,9 +179,9 @@ class Formatter:
 				self.next()
 				condition = self.facteur()
 				if(not condition or condition.nature != "condition"):
-					raise Error.BadSyntaxError(condition)
+					raise Error.BadSyntaxError(self.expr, f"bad condition", self.current_lexeme.position)
 				if(not re.search(self.regex.get(nature), condition.a)):
-					raise Error.WrongConditionSyntax(condition.a)
+					raise Error.WrongConditionSyntax(self.expr, condition.a, self.current_lexeme.position)
 				table = self.facteur()
 
 				if(not table or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
