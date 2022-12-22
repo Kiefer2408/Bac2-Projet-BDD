@@ -51,3 +51,6 @@ class NoDatabaseException(CustomError):
 class WrongNameException(CustomError):
 	def __init__(self,desc=None,position=None):
 		super().__init__(None, "This name of key doesn't exist",desc,position)
+class PrintErrorException(CustomError):
+	def __init__(self,desc=None,position=None):
+		super().__init__(None, "Error During Print",desc,position)
