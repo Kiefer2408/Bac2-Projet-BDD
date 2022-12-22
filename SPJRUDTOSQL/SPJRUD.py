@@ -94,6 +94,7 @@ class SPJRUD:
     #Affiche la relation Rname sous forme de tableau
     def printTable(self,Rname):
         self.checkDbValidity()
+        self.checkTableValidity()
         con=sqlite3.connect(f"{self.dbFileName}.db")
         cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
         names = list(map(lambda x: x[0], cursor.description))
@@ -170,4 +171,9 @@ class SPJRUD:
             return True
         else:
             raise Error.WrongDatabaseFileName()
+    def checkTableValidity(self):
+        if(os.path.exists(f"{self.dbFileName}.db")):
+            return True
+        else:
+            raise Error.NoDatabaseException()
 
