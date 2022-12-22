@@ -56,7 +56,7 @@ class SPJRUD:
     # Convertisseur pour l'opérateur UNION
     def uConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1}) UNION  (SELECT * FROM {RName2}) "
+            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} UNION SELECT * FROM {RName2} {self.getAlias()})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("UNION")
@@ -64,7 +64,7 @@ class SPJRUD:
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1}) MINUS (SELECT * FROM {RName2})"
+            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()}) MINUS (SELECT * FROM {RName2} {self.getAlias()})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("DIFFERNCE/MINUS")
