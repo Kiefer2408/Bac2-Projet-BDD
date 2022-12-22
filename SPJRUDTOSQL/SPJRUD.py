@@ -56,7 +56,7 @@ class SPJRUD:
             sqlStr = f"(SELECT * FROM {RName1}) UNION  (SELECT * FROM {RName2}) "
             return sqlStr
         else:
-            raise NotSameAttribute("UNION")
+            raise Error.NotSameAttribute("UNION")
 
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
@@ -64,7 +64,7 @@ class SPJRUD:
             sqlStr = f"(SELECT * FROM {RName1}) MINUS (SELECT * FROM {RName2})"
             return sqlStr
         else:
-            raise NotSameAttribute("DIFFERNCE/MINUS")
+            raise Error.NotSameAttribute("DIFFERNCE/MINUS")
 
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
@@ -94,6 +94,7 @@ class SPJRUD:
     #Affiche la relation Rname sous forme de tableau
     def printTable(self,Rname):
         self.checkDbValidity()
+        self.checkTableValidity()
         con=sqlite3.connect(f"{self.dbFileName}.db")
         cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
         names = list(map(lambda x: x[0], cursor.description))
@@ -170,4 +171,9 @@ class SPJRUD:
             return True
         else:
             raise Error.WrongDatabaseFileName()
+    def checkTableValidity(self):
+        if(os.path.exists(f"{self.dbFileName}.db")):
+            return True
+        else:
+            raise Error.NoDatabaseException()
 
