@@ -72,13 +72,16 @@ class SPJRUD:
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
         if(self.checkDbValidity()):
-            con = sqlite3.connect(f"{self.dbFileName}.db")
-            con.row_factory = sqlite3.Row
-            attributeName = con.execute("SELECT * FROM " + RName.upper())
-            line = attributeName.fetchone()
-            attributes = line.keys()
-            con.close()
-            return attributes
+            try:
+                con = sqlite3.connect(f"{self.dbFileName}.db")
+                con.row_factory = sqlite3.Row
+                attributeName = con.execute("SELECT * FROM " + RName.upper())
+                line = attributeName.fetchone()
+                attributes = line.keys()
+                con.close()
+                return attributes
+            except sqlite3.OperationalError:
+                raise Error.WrongNameException()
 
 
     # Verifie si tous les attribus sont les mêmes dans 2 tables
@@ -99,7 +102,6 @@ class SPJRUD:
         self.checkDbValidity()
         try:
             con=sqlite3.connect(f"{self.dbFileName}.db")
-            print(f"SELECT * FROM {Rname} {self.getAlias()}")
             cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
             names = list(map(lambda x: x[0], cursor.description))
             column_lenght = list()
