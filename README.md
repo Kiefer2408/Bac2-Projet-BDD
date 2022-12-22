@@ -1,30 +1,46 @@
 # Bac2-Projet-BDD
 
-Foobar is a Python library for dealing with word pluralization.
-
-## Installation
-
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
-
-```bash
-pip install foobar
-```
+Le projet de base de donnée de l'année 2022-2023 consiste à la création d'un outils de compilation (traduction) de requête SPJRUD vers des requêtes SQL.
 
 ## Usage
 
-```bash
-SPJRUD >> @select{Name = "John"} Table
-SELECT 
+Les commandes SPJRUD doivent être précédée du préfixe `@` (ex. @join, @select,...). 
+Sans parenthèses, le traitement des commandes est left-associative (c'est-à-dire `A @join B @join C` équivaut à `(A @join B) @join c` et non `A @join (B @join c)`)
+```
+SPJRUD >> @select{A=1} A
+[select: [condition: A=1] [table: A]]
+ A | B 
+———|———
+ 1 | 2 
+ 1 | 3 
 SPJRUD >> Table1 @join Table2
+[join: [table: Table1] [table: Table2]]
+ A1 | B12 | A2
+————|—————|————
+ 1  | 2   | 7
+ 4  | 3   | 9
 ```
 
-## Contributing
+## Choix d'implémentation
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+La traduction de la requête SPJRUD commence d'abord par l'analyse syntaxique de celle-ci. Pour cela, le programme extrait une liste de [lexèmes](https://fr.wikipedia.org/wiki/Lex%C3%A8me) dans la chaîne de caractères de la requêtes, puis crée un arbre de syntaxe abstraite en parcourant récursivement la liste des lexèmes.
 
-Please make sure to update tests as appropriate.
+Soit $$A = \{modify , link , ( , ) , table\}, V_n = \{E, F\}, \text{l'axiome est E}$$
+Les règles sont :
 
-## License
+[insérer ici l'image]
 
-[MIT](https://choosealicense.com/licenses/mit/)
+
+## Difficulté et solution
+Une difficulté a été de faire les 
+
+## Fonctionnalité supplémentaire
+Notre projet présente quelque fonctionnalité supplémentaires :
+
+Choix de base de données : l'utilisateur peut, à tout moment pendant que le programme est lancé, modifier la base de donnée que celui-ci utilise.
+```bash
+@use [db-name]
+Database Found
+@use [incorrect-db-name]
+Database Not Found
+```

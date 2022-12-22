@@ -54,18 +54,19 @@ class Formatter:
 	# Regex vérifiant la syntaxe des conditions des commandes select, rename et 
 	# project
 	regex = {
-			"select": "[A-Za-z0-9]+ *(=|<=|>=|<|>){1} *(\"[A-Za-z0-9]+\"|[0-9]+){1}",
-			"project": "[A-Za-z0-9]+(, *[A-Za-z0-9]+)*",
-			"rename": "[A-Za-z0-9]:[A-Za-z0-9]"
-		}
+		"select": "[A-Za-z0-9]+ *(=|<=|>=|<|>){1} *(\"[A-Za-z0-9]+\"|[0-9]+){1}",
+		"project": "[A-Za-z0-9]+(, *[A-Za-z0-9]+)*",
+		"rename": "[A-Za-z0-9]:[A-Za-z0-9]"
+	}
 		
 
 	# Convertis une chaîne de caractère en Arbre de Syntaxe Abstrait (AST)
 	def convert_to_ast(self, string):
-		self.lexeme_list = self.to_lexeme(string)
-		self.lc = self.lexeme_list[0]
+		self.expr = string
+		self.lexeme_list = self.to_lexeme(self.expr)
+		self.current_lexeme = self.lexeme_list[0]
 		self.t = self.expression()
-		if(self.lc.nature != "EOL"):
+		if(self.current_lexeme.nature != "EOL"):
 			raise Error.BadSyntaxError("ERROR SYNTAX")
 		return(self.t)
 
@@ -88,7 +89,7 @@ class Formatter:
 			if(x == self.prefix):
 				j = i+1
 				if(i == len(expr)-1):
-					raise Error.UnknowCommand(self.prefix, i)
+					raise Error.UnknowCommand(expr, f"'' is not a valid command, please refer to the documentation", i)
 
 				# récupère le nom de la commande : "@select{} A" -> "select"
 				while(expr[j].isalpha()):
@@ -104,7 +105,7 @@ class Formatter:
 				elif(command in ["join", "union", "minus"]):
 					lexeme_list.append(Lexeme("link", command, i))
 				else:
-					raise Error.UnknowCommand(command, i)
+					raise Error.UnknowCommand(expr, f"'{command}' is not a valid command, please refer to the documentation", i)
 
 				i = j-1
 
@@ -120,7 +121,8 @@ class Formatter:
 
 				# retourne une erreur si le nom de la table est le même qu'une commande
 				if(string in self.command):
-					raise Error.BadNameError(string, i)
+					raise Error.InvalidNameError(expr, f"Invalid table name, you can't use '{string}' as table name", i)
+
 				lexeme_list.append(Lexeme("str", string, i))
 				i = j-1
 			#  detecte une condition
@@ -143,35 +145,37 @@ class Formatter:
 		lexeme_list.append(Lexeme("EOL", None, i))
 		return lexeme_list
 
-	# truc compliqué à expliquer
+	# Représente les règles de l'opération link (voir read.me)
 	def expression(self):
 		t = self.facteur()
-		if(self.lc.nature not in [")", "link", "EOL"]):
-			raise Exception("ERROR : INVALID SYNTAX")
-		while(self.lc.nature == "link"): #JOIN UNION MINUS
-			nature = self.lc.value
+		if(self.current_lexeme.nature not in [")", "link", "EOL"]):
+			raise Exception("ERROR : INVALID SYNTAX (wtf)")
+
+		while(self.current_lexeme.nature == "link"): #JOIN UNION MINUS
+			nature = self.current_lexeme.value
 			self.next()
 			r = self.facteur()
 
 			t = Terme(nature, t, r)
 		return t
 
-	# truc compliqué à expliquer bis
+	# Représente les règles de l'opération modify (voir read.me)
 	def facteur(self):
-		match self.lc.nature:
+		match self.current_lexeme.nature:
 			case "(":
 				self.next()
 				t = self.expression()
-				if(self.lc.nature != ")"):
-					raise Error.BadSyntaxError(f"ERROR : MISSING )")
+				if(self.current_lexeme.nature != ")"):
+					print(self.current_lexeme.position)
+					raise Error.BadSyntaxError(self.expr, f"missing ')'", self.current_lexeme.position)
 			case "str":
-				t = Terme("table", self.lc.value)
+				t = Terme("table", self.current_lexeme.value)
 			case "condition":
-				t = Terme("condition", self.lc.value)
+				t = Terme("condition", self.current_lexeme.value)
 
 			# (, modify, condition, table, )
 			case "modify": 				#select,rename,project
-				nature = self.lc.value
+				nature = self.current_lexeme.value
 				self.next()
 				condition = self.facteur()
 				if(not condition or condition.nature != "condition"):
@@ -192,8 +196,8 @@ class Formatter:
 
 	# passe au lexeme suivant  @project{popu} (@rename{popu:popu} A)
 	def next(self):
-		if(self.lexeme_list.index(self.lc)+1 != len(self.lexeme_list)):
-			self.lc = self.lexeme_list[self.lexeme_list.index(self.lc)+1]
+		if(self.lexeme_list.index(self.current_lexeme)+1 != len(self.lexeme_list)):
+			self.current_lexeme = self.lexeme_list[self.lexeme_list.index(self.current_lexeme)+1]
 
 	def __str__(self):
 		return self.sql

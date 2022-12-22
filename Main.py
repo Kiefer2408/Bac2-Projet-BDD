@@ -75,4 +75,4 @@ if __name__ == "__main__":
 		except CustomError as e:
 			if(debug):
 				print(traceback.format_exc())
-			print("\033[93m" + str(e) + "\033[0m")
+			inp.print_failed(str(e))

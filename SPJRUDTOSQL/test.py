@@ -1,9 +1,10 @@
 from Formatter import *
 from Error import *
+
 class Test:
 
 	def __init__(self):
-		self.sql = SQL()
+		self.sql = Formatter()
 
 	def run_test(self, input_string, expected_output):
 		try:
@@ -31,13 +32,13 @@ class Test:
 if __name__ == "__main__":
 	test = Test()
 	test.run_test("", None)
-	test.run_test("@", UnknowCommand())
-	test.run_test("@s", UnknowCommand())
-	test.run_test("@select", BadSyntaxError())
-	test.run_test("select", BadNameError())
+	test.run_test("@", UnknowCommand("@"))
+	test.run_test("@s", UnknowCommand("@s"))
+	test.run_test("@select", BadSyntaxError("@select"))
+	test.run_test("select", BadNameError("select"))
 	test.run_test("table", "[table: table]")
-	test.run_test("@select{A=\"A\"}", MissingExprError())
+	test.run_test("@select{A=\"A\"}", MissingExprError("@select{A=\"A\"}"))
 	test.run_test("@select{A=\"A\"} A", "[select: [condition: A=\"A\"] [table: A]]")
-	test.run_test("@select{\"A\"=\"A\"} A", WrongConditionSyntax())
-	test.run_test("(", BadSyntaxError())
-	test.run_test("()", BadSyntaxError())
+	test.run_test("@select{\"A\"=\"A\"} A", WrongConditionSyntax("@select{\"A\"=\"A\"} A"))
+	test.run_test("(", BadSyntaxError("("))
+	test.run_test("()", BadSyntaxError("()"))
