@@ -89,3 +89,21 @@ Database Found
 Database Not Found
 
 ```
+```
+Nettoyage du terminal,l'utilisateur peut à tout moment nettoyer le terminal en utilisant la commande suivante:
+```
+@clear
+```
+Création de table, l'utilisateur peut créer ses propres tables à partir de requêtes SPJRUD via la commande suivante
+```
+@create [tableName] [SPJRUDRequest]
+```
+Affichage, l'utilisateur peut afficher une table ou une requête SPJRUD via la commande suivante:
+```
+@print [tableName]
+@print [SPJRUDRequest]
+```
+Quitter,l'utilisateur peut quitter à tout moment le programme via la commande suivante: 
+```
+@exit
+```
