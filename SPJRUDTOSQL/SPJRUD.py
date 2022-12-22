@@ -66,11 +66,10 @@ class SPJRUD:
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-
             sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} EXCEPT SELECT * FROM {RName2} {self.getAlias()})"
             return sqlStr
         else:
-            raise Error.NotSameAttribute("DIFFERNCE/MINUS")
+            raise Error.NotSameAttribute("DIFFERENCE/MINUS")
 
     # Récupère toutes les attributs/Clés d'une table
     def getDbKeys(self, RName):
@@ -126,7 +125,7 @@ class SPJRUD:
             print("\n")
             cursor.close()
         except sqlite3.OperationalError:
-            raise Error.WrongNameException()
+            raise Error.PrintErrorException()
 
 
     #Affiche une ligne row, de la relation, de longueur lenght
