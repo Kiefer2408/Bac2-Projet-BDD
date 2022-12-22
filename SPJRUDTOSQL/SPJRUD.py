@@ -56,7 +56,9 @@ class SPJRUD:
     # Convertisseur pour l'opérateur UNION
     def uConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
+
             sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} UNION SELECT * FROM {RName2} {self.getAlias()})"
+
             return sqlStr
         else:
             raise Error.NotSameAttribute("UNION")
@@ -64,7 +66,8 @@ class SPJRUD:
     # Convertisseur pour l'opérateur DIFFERENCE
     def dConvert(self, RName1, RName2):
         if self.checkSameAtribute(RName1, RName2):
-            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()}) MINUS (SELECT * FROM {RName2} {self.getAlias()})"
+
+            sqlStr = f"(SELECT * FROM {RName1} {self.getAlias()} MINUS SELECT * FROM {RName2} {self.getAlias()})"
             return sqlStr
         else:
             raise Error.NotSameAttribute("DIFFERNCE/MINUS")
@@ -83,7 +86,6 @@ class SPJRUD:
             except sqlite3.OperationalError:
                 raise Error.WrongNameException()
 
-
     # Verifie si tous les attribus sont les mêmes dans 2 tables
     def checkSameAtribute(self, RName1, RName2):
         keys1 = self.getDbKeys(RName1)
@@ -101,19 +103,20 @@ class SPJRUD:
     def printTable(self,Rname):
         self.checkDbValidity()
         try:
-            con=sqlite3.connect(f"{self.dbFileName}.db")
-            cursor=con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
-            names = list(map(lambda x: x[0], cursor.description))
+            conn=sqlite3.connect(f"{self.dbFileName}.db")
+            cursor=conn.cursor()
+            request=cursor.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
+            names = list(map(lambda x: x[0], request.description))
             column_lenght = list()
             for col in names:
                 longest = len(col)
-                test = con.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
+                test = cursor.execute(f"SELECT {col} FROM {Rname} {self.getAlias()}")
                 for val in test.fetchall():
                     lenght = len(str(val[0]))
                     if lenght > longest:
                         longest = lenght
                 column_lenght.append(longest)
-            table = con.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
+            table = cursor.execute(f"SELECT * FROM {Rname} {self.getAlias()}")
 
             line = list()
             self.printLine(names, column_lenght)
@@ -121,9 +124,9 @@ class SPJRUD:
             for row in table.fetchall():
                 self.printLine(row, column_lenght)
             print("\n")
-            con.close()
+            cursor.close()
         except sqlite3.OperationalError:
-            raise Error.NoDatabaseException()
+            raise Error.WrongNameException()
 
 
     #Affiche une ligne row, de la relation, de longueur lenght
