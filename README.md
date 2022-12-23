@@ -44,10 +44,11 @@ SPJRUD >> @rename{SALARY:SAL}COMPANY)
 ### Union
 ````
 SPJRUD >> COMPANY @union EMPLOYEE
+
 ````
 ### Difference
 ````
-SPJRUD >>  @project{salary}COMPANY @minus @project{salary}(@select{salary>20000}COMPANY)
+SPJRUD >> @project{salary}COMPANY) @minus (@project{salary}(@select{salary>20000}COMPANY)
 (SELECT * FROM (SELECT DISTINCT salary from COMPANY table1)) MINUS (SELECT * FROM (SELECT DISTINCT salary from (SELECT * from COMPANY where "salary">20000) table2))
 ````
 ## Choix d'implémentation
@@ -62,19 +63,47 @@ La classe `Lexeme` possède obligatoirement une nature et optionnellement une va
 - `condition`, qui représente la condition/instruction d'une commande `modify`
 - `EOL`, qui représente la fin de la requête
 
-Une fois la liste de lexèmes créée sans erreur, une seconde partie du programme s'occupe de créer l'arbre de syntaxe abstraite récursivement en parcourant celle-ci.
+Une fois la liste de lexèmes créée, une seconde partie du programme s'occupe de créer l'arbre de syntaxe abstraite récursivement en parcourant celle-ci.
+
+Pour construire l'arbre syntaxique, on utilise les différents principe de l'[analyse syntaxique](pauillac.inria.fr/~levy/courses/X/IF/poly/main004.html#ssect:exp-arithmetiques) :
+- `A`, dit l'alphabet terminal, tout les mots construits par la grammaire sont consitué d'élément de `A`
+- `Vn`, dit l'alphabet auxiliaire, dont les élément servent de variables intermédiaire servant à engendrer des mots. `S`, une lettre de `Vn` dites axiome, joue un rôle particulier
+- Des règles sous forme S -> u, où S est un élément de `Vn` et u un ensemble d'élément de `A` ou `Vn` 
+
+Dans notre cas, nous avons :
+$$A = \{modify , link , ( , ) , table\}$$
+$$V_n = \{E, F\}$$
+$$S = E$$
+
+et les règles :
+
+![equation](https://latex.codecogs.com/png.image?%5Cinline%20%5Cdpi%7B110%7D%5Cbegin%7Baligned%7D&E%20%5Cto%20F%20%5Cquad%20&&%20F%20%5Cto%20table%20%5C%5C&E%20%5Cto%20FFE%20%5Cquad%20&&%20F%20%5Cto%20condition%20%5C%5C&E%20%5Cto%20FEF%20%5Cquad%20&&%20F%20%5Cto%20link%20%5C%5C&&&%20F%20%5Cto%20modify%20%5C%5C&&&%20F%20%5Cto%20(E)%20%5C%5C%5Cend%7Baligned%7D)
+
+Pour former le mot, il suffit alors de partir de l'axiome `S` et de suivre les règles jusqu'à arriver au mot voulu. 
+
+Par exemple, pour produire `(@select{col1} A) @join B`, on fait : ![equation](https://latex.codecogs.com/png.image?%5Cinline%20%5Cdpi%7B110%7D%5Cbegin%7Baligned%7D&E%20%5Cto%20FEF%5C%5C%5Cto&(E)F%5C:table%5C%5C%5Cto&(FFE)%5C;%20link%5C;%20table%20%5C%5C%5Cto&(modify%5C;%20condition%5C;%20F)%5C;%20link%5C;%20table%20%5C%5C%5Cto&(modify%5C;%20condition%5C;%20table)%5C;%20link%5C;%20table%5Cend%7Baligned%7D%20)
+
+La création de celui-ci se fait en pratique par une analyse descendante récursive, c'est-à-dire que l'on cherche à contruire la suite des dérivations de la grammaire en démarrant de l'axiome jusqu'à la chaîne de caractère.
+
+Lors de ces 2 phases, il y a vérification de la validité de la requête. Si une erreur de syntaxe est répérée, une erreur est lancée et l'utilisateur est prévenu du type et de la position de l'erreur :
+- `BadSyntaxError` : erreur générique lancée lorsqu'une erreur de syntaxe est repérée
+- `InvalidNameError` : erreur lancée lorsque le nom d'une table est invalide. Cela peut-être dû à des caractères non-autorisé ou l'utilisation d'un mot appartenant au dictionnaire de commande.
+- `UnknowCommand` : erreur lancée lorsque la commande suivant le préfixe est inconnu
+- `WrongConditionSyntax` : erreur lancée lorsque la condition/instruction d'une commande `modify` ne correspond pas à celle-ci ou qu'elle présente une erreur de syntaxe
+- `MissingExprError` : erreur lancée lorsqu'une commande manque une expression
+- `NotSameAttribute` : erreur lancée pour ... euhhhh...
+- `WrongDatabaseFileName` : erreur lancée lorsque le nom de la base de donnée voulue n'existe pas ou est incorrect
+- `No DatabaseException` : erreur lancée lorsqu'aucune base de données n'est sélectionnée
+- `WrongNameException` : euhhhhh
+- `PrintErrorException` : bon débrouille toi pour celle là kiefer
 
 Si aucune erreur de syntaxe n'est repérée, la méthode renvoie un objet `Terme` qui contient lui-même des d'autres `Terme` ou une chaîne de caractère représentant une commande, une condition ou le nom d'une table.
-
-Soit $$A = \{modify , link , ( , ) , table\}, V_n = \{E, F\}, \text{l'axiome est E}$$
-Les règles sont :
-
-[insérer ici l'image]
 
 ## Difficulté et solution
 - Lors de la création de la récursive servant à produire l'arbre syntaxique abstrait, les relations de type `modify` se réalisait en right-associative, c'est à dire que l'ordre des opérations se faisait de droite à gauche (`A @join B @join C` était interprété comme `A @join (B @join C`). 
 Pour résourdre ce problème, il a fallu rajouter un accumulateur pour traiter directement la première opération `modify` et l'utiliser dans les suivantes. Toutefois l'ajout de cet accumulateur a forcé l'ajout d'un nouveau lexème afin d'éviter que le programme s'arrête prématurément : `EOL`. Celui-ci indique la fin de la requête (End-Of-Line), et empêche l'arrêt de la boucle avant d'atteindre ce lexème.
 
+- Kiefer à plusieurs fois fait preuve d'inattention, mais la taxation d'un stack de quartz semble l'avoir remis dans le droit chemin
 
 ## Fonctionnalité supplémentaire
 Notre projet présente quelque fonctionnalité supplémentaires :
@@ -86,8 +115,9 @@ Database Found
 
 @use [incorrect-db-name]
 Database Not Found
-```
 
+```
+```
 Nettoyage du terminal,l'utilisateur peut à tout moment nettoyer le terminal en utilisant la commande suivante:
 ```
 @clear
@@ -113,3 +143,4 @@ Quitter,l'utilisateur peut quitter à tout moment le programme via la commande s
 ```
 @exit
 ```
+
