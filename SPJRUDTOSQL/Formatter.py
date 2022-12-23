@@ -2,6 +2,9 @@ import re
 from SPJRUDTOSQL import Error
 
 # Représente une unité de langage
+from SPJRUDTOSQL.Error import BadSyntaxError
+
+
 class Lexeme:
 	# les différentes natures valables sont str, modify, link, (, ) et condition
 	# Une valeur est nécessaire pour toutes les natures sauf les ()
