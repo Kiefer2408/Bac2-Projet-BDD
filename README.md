@@ -100,6 +100,14 @@ Affichage, l'utilisateur peut afficher une table ou une requête SPJRUD via la c
 ```
 @print [tableName]
 @print [SPJRUDRequest]
+
+@print COMPANY
+ ID | NAME  | AGE | ADDRESS    | SALARY  
+————|———————|—————|————————————|—————————
+ 1  | Paul  | 32  | California | 20000.0 
+ 2  | Allen | 25  | Texas      | 15000.0 
+ 3  | Teddy | 23  | Norway     | 20000.0 
+ 4  | Mark  | 25  | Rich-Mond  | 65000.0 
 ```
 Quitter,l'utilisateur peut quitter à tout moment le programme via la commande suivante: 
 ```

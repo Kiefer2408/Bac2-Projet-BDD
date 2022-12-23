@@ -25,7 +25,6 @@ class SPJRUD:
         if right.isalpha():
             right = f'"{right}"'
         newCondition = f"{left}{op}{right}"
-
         return newCondition
 
     # Convertisseur pour l'opérateur SELECT
