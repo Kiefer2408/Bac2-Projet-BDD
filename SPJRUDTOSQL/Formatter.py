@@ -21,6 +21,7 @@ class Lexeme:
 		else:
 			return self.nature
 
+
 # représente les noeuds de l'arbre de syntaxe abstrait
 class Terme:
 	# différentes nature qui ont différents attributs:
@@ -43,6 +44,7 @@ class Terme:
 		else:
 			return f"[{self.nature}: {self.a}]"
 
+
 class Formatter:
 
 	# Préfixe des commandes
@@ -63,9 +65,15 @@ class Formatter:
 	# Convertis une chaîne de caractère en Arbre de Syntaxe Abstrait (AST)
 	def convert_to_ast(self, string):
 		self.expr = string
+
 		self.lexeme_list = self.to_lexeme(self.expr)
 		self.current_lexeme = self.lexeme_list[0]
+
+
 		self.t = self.expression()
+
+		# Si le lexème courant n'est pas de nature EOL cela veut dire que le
+		# programme n'a pas parcouru l'entièreté de l'expression
 		if(self.current_lexeme.nature != "EOL"):
 			raise Error.BadSyntaxError("ERROR SYNTAX")
 		return(self.t)
@@ -76,6 +84,7 @@ class Formatter:
 	def to_lexeme(self, expr):
 		lexeme_list = list()
 
+		# Parcours la chaîne de caractères
 		i = 0
 		while (i < len(expr)):
 			x = expr[i]
@@ -88,8 +97,9 @@ class Formatter:
 			# detecte si c'est une commande ou non
 			if(x == self.prefix):
 				j = i+1
+
 				if(i == len(expr)-1):
-					raise Error.UnknowCommand(expr, f"'' is not a valid command, please refer to the documentation", i)
+					raise Error.UnknowCommand(expr, '', i)
 
 				# récupère le nom de la commande : "@select{} A" -> "select"
 				while(expr[j].isalpha()):
@@ -101,15 +111,13 @@ class Formatter:
 
 				if(command in ["select", "rename", "project"]):
 					lexeme_list.append(Lexeme("modify", command, i))
-
 				elif(command in ["join", "union", "minus"]):
 					lexeme_list.append(Lexeme("link", command, i))
 				else:
-					raise Error.UnknowCommand(expr, f"'{command}' is not a valid command, please refer to the documentation", i)
-
+					raise Error.UnknowCommand(expr, command, i)
 				i = j-1
 
-			# detecte les chaînes de caractères
+			# detecte les chaînes de caractères (nom de table)
 			if(x.isalpha()):
 				j = i
 				while(expr[j].isalnum()):
@@ -121,10 +129,11 @@ class Formatter:
 
 				# retourne une erreur si le nom de la table est le même qu'une commande
 				if(string in self.command):
-					raise Error.InvalidNameError(expr, f"Invalid table name, you can't use '{string}' as table name", i)
+					raise Error.InvalidNameError(expr, string, i)
 
 				lexeme_list.append(Lexeme("str", string, i))
 				i = j-1
+
 			#  detecte une condition
 			if(x == "{"):
 				j = i+1
@@ -142,82 +151,83 @@ class Formatter:
 
 			i += 1
 
+		# ajoute à la fin de la liste des lexèmes EOL pour signifier la fin de 
+		# la chaîne de caractères
 		lexeme_list.append(Lexeme("EOL", None, i))
 		return lexeme_list
 
+
 	# Représente les règles de l'opération link (voir read.me)
 	def expression(self):
-		t = self.facteur()
+		terme = self.facteur()
 		if(self.current_lexeme.nature not in [")", "link", "EOL"]):
-			raise Exception("ERROR : INVALID SYNTAX (wtf)")
+			raise BadSyntaxError(self.expr, "unknow error", self.current_lexeme.position)
 
-		while(self.current_lexeme.nature == "link"): #JOIN UNION MINUS
+		# accumulateur pour réaliser les opérations link en right associative
+		# il consite à réaliser et passer la commande dans l'appel récursif
+		while(self.current_lexeme.nature == "link"): # join, union, minus
 			nature = self.current_lexeme.value
 			self.next()
-			r = self.facteur()
+			right = self.facteur()
+			terme = Terme(nature, terme, right)
+		return terme
 
-			t = Terme(nature, t, r)
-		return t
-
-	# Représente les règles de l'opération modify (voir read.me)
+	# Représente les règles de l'opération modify et le reste (voir read.me)
 	def facteur(self):
 		match self.current_lexeme.nature:
 			case "(":
 				self.next()
 				t = self.expression()
 				if(self.current_lexeme.nature != ")"):
-					print(self.current_lexeme.position)
 					raise Error.BadSyntaxError(self.expr, f"missing ')'", self.current_lexeme.position)
+
 			case "str":
 				t = Terme("table", self.current_lexeme.value)
+
 			case "condition":
 				t = Terme("condition", self.current_lexeme.value)
 
-			# (, modify, condition, table, )
-			case "modify": 				#select,rename,project
-				nature = self.current_lexeme.value
+			case "modify": # select, rename, project
+				command = self.current_lexeme.value
+
 				self.next()
 				condition = self.facteur()
+
+				# absence de condition après une commande modify
 				if(not condition or condition.nature != "condition"):
-					raise Error.BadSyntaxError(self.expr, f"bad condition", self.current_lexeme.position)
-				if(not re.search(self.regex.get(nature), condition.a)):
+					raise Error.BadSyntaxError(self.expr, f"no condition found", self.current_lexeme.position)
+
+				if(not re.search(self.regex.get(command), condition.a)):
 					raise Error.WrongConditionSyntax(self.expr, condition.a, self.current_lexeme.position)
+
 				table = self.facteur()
 
-				if(not table or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
-					raise Error.MissingExprError(nature)
-				return Terme(nature, condition, table)
+				# vérifie qu'une table possédant un nom différent que les commandes ou une expression est passée en paramètre
+				if(not table or table.nature not in ['table', 'modify'] or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
+					raise Error.MissingExprError(self.expr, '', self.current_lexeme.position)
+
+				return Terme(command, condition, table)
+
+			# EOL ne devrait jamais être catch dans les fonctions expression()
+			# et facteur(), ça signifie qu'il manque des éléments
 			case "EOL":
-				return None
+				raise Error.MissingExprError(self.expr, '', self.current_lexeme.position)
+
+			case "link":
+				raise Error.MissingExprError(self.expr, f"@{self.current_lexeme.value}", self.current_lexeme.position)
+
 			case _:
-				raise Error.BadSyntaxError("empty string")
+				raise Error.BadSyntaxError(self.expr, "empty string", self.current_lexeme.position)
+
+		# passe au lexème suivant
 		self.next()
 		return t
 
-	# passe au lexeme suivant  @project{popu} (@rename{popu:popu} A)
+	# passe au lexeme suivant de la liste des lexèmes
 	def next(self):
 		if(self.lexeme_list.index(self.current_lexeme)+1 != len(self.lexeme_list)):
 			self.current_lexeme = self.lexeme_list[self.lexeme_list.index(self.current_lexeme)+1]
 
-	def __str__(self):
-		return self.sql
-
-if __name__ == "__main__":
-	formatter = Formatter()
-	print(type(formatter.convert_to_ast("@project[{Population}A")))
-	print(formatter.convert_to_ast("@project[{Population}A"))
-	string="@project[{Population}A"
-	a=formatter.to_lexeme(string)
-	#for i in range(len(a)):
-		#print(a[i].Terme())
-	while True:
-		x = input("SPJRUD >>")
-		if(x == "@exit"):
-			break
-		try:
-			print(formatter.convert_to_ast(x))
-		except Exception as e:
-			print("\033[93m" + str(e) + "\033[0m")
 
 
 	# SQL("select{Test=\"Adrien\"} @select{Test=\"Adrien\"} A")

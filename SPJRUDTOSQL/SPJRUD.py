@@ -170,8 +170,11 @@ class SPJRUD:
             case "union":
                 sql = self.uConvert(self.to_sql(terme.a), self.to_sql(terme.b))
         return sql
+
+        
     def sqlTraductor(self,string):
         formatter = Formatter.Formatter()
+        print(formatter.convert_to_ast(string))
         return self.to_sql(formatter.convert_to_ast(string))
 
 

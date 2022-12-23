@@ -4,7 +4,7 @@ from configparser import ConfigParser
 from SPJRUDTOSQL.SPJRUD import *
 from SPJRUDTOSQL.Error import *
 
-debug = True
+debug = 0
 config = ConfigParser(allow_no_value=True)
 
 HISTORY_FILE = os.path.expanduser('~/.history')
