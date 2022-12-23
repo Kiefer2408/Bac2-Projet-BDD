@@ -201,9 +201,10 @@ class Formatter:
 					raise Error.WrongConditionSyntax(self.expr, condition.a, self.current_lexeme.position)
 
 				table = self.facteur()
-
 				# vérifie qu'une table possédant un nom différent que les commandes ou une expression est passée en paramètre
-				if(not table or table.nature not in ['table', 'modify'] or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
+				if(not table 
+					or table.nature not in ["table", "select", "rename", "project", "join", "union", "minus"]
+					or (table.nature == "table" and table.a in ["select", "rename", "project", "join", "union", "minus"])):
 					raise Error.MissingExprError(self.expr, '', self.current_lexeme.position)
 
 				return Terme(command, condition, table)
