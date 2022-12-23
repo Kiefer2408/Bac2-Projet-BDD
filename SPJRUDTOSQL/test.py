@@ -35,7 +35,6 @@ if __name__ == "__main__":
 	test.run_test("@", UnknowCommand("@"))
 	test.run_test("@s", UnknowCommand("@s"))
 	test.run_test("@select", BadSyntaxError("@select"))
-	test.run_test("select", BadNameError("select"))
 	test.run_test("table", "[table: table]")
 	test.run_test("@select{A=\"A\"}", MissingExprError("@select{A=\"A\"}"))
 	test.run_test("@select{A=\"A\"} A", "[select: [condition: A=\"A\"] [table: A]]")
