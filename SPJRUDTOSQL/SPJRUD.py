@@ -173,6 +173,7 @@ class SPJRUD:
     #Traduit la requete en une requete sql
     def sqlTraductor(self,string):
         formatter = Formatter.Formatter()
+        print(formatter.convert_to_ast(string))
         return self.to_sql(formatter.convert_to_ast(string))
 
 
