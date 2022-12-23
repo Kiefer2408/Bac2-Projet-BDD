@@ -42,9 +42,10 @@ if __name__ == "__main__":
 				case "@clear":
 					os.system('clear')
 				case "@use":
+					if(len(spt)<2):
+						raise Error.NotEnoughArguementError
 					dbName = spt[1]
 					if os.path.exists(f'{dbName}.db'):
-
 						config.set("main", "dbname", dbName)
 						with open(CONFIG_FILE, 'w') as f:
 							config.write(f)
@@ -54,11 +55,15 @@ if __name__ == "__main__":
 					else:
 						print("\033[31mDatabase not found\x1b[0m")
 				case "@create":
+					if(len(spt)<2):
+						raise Error.NotEnoughArguementError
 					tableName = spt[1]
 					sql_request = spt[2]
 					spjrud.createTable(tableName, spjrud.sqlTraductor(sql_request))
 					inp.print_success("Table succesfully created")
 				case "@print":
+					if(len(spt)<2):
+						raise Error.NotEnoughArguementError
 					if(len(spt)>2):
 						table=f"{spt[1]} {spt[2]}"
 					else:

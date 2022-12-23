@@ -57,3 +57,6 @@ class WrongNameException(CustomError):
 class PrintErrorException(CustomError):
 	def __init__(self,desc=None,position=None):
 		super().__init__(None, "Error During Print",desc,position)
+class NotEnoughArguementError(CustomError):
+	def __init__(self,desc=None,position=None):
+		super().__init__(None, "Not Enough Argument",desc,position)
