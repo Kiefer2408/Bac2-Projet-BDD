@@ -44,7 +44,6 @@ SPJRUD >> @rename{SALARY:SAL}COMPANY)
 ### Union
 ````
 SPJRUD >> COMPANY @union EMPLOYEE
-
 ````
 ### Difference
 ````
@@ -87,9 +86,8 @@ Database Found
 
 @use [incorrect-db-name]
 Database Not Found
+```
 
-```
-```
 Nettoyage du terminal,l'utilisateur peut à tout moment nettoyer le terminal en utilisant la commande suivante:
 ```
 @clear
