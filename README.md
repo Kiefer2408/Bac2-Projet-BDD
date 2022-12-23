@@ -47,7 +47,7 @@ SPJRUD >> COMPANY @union EMPLOYEE
 ````
 ### Difference
 ````
-SPJRUD >> @project{salary}COMPANY) @minus (@project{salary}(@select{salary>20000}COMPANY)
+SPJRUD >>  @project{salary}COMPANY @minus @project{salary}(@select{salary>20000}COMPANY)
 (SELECT * FROM (SELECT DISTINCT salary from COMPANY table1)) MINUS (SELECT * FROM (SELECT DISTINCT salary from (SELECT * from COMPANY where "salary">20000) table2))
 ````
 ## Choix d'implémentation
