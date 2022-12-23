@@ -44,7 +44,6 @@ SPJRUD >> @rename{SALARY:SAL}COMPANY)
 ### Union
 ````
 SPJRUD >> COMPANY @union EMPLOYEE
-
 ````
 ### Difference
 ````
@@ -102,8 +101,6 @@ Si aucune erreur de syntaxe n'est repérée, la méthode renvoie un objet `Terme
 ## Difficulté et solution
 - Lors de la création de la récursive servant à produire l'arbre syntaxique abstrait, les relations de type `modify` se réalisait en right-associative, c'est à dire que l'ordre des opérations se faisait de droite à gauche (`A @join B @join C` était interprété comme `A @join (B @join C`). 
 Pour résourdre ce problème, il a fallu rajouter un accumulateur pour traiter directement la première opération `modify` et l'utiliser dans les suivantes. Toutefois l'ajout de cet accumulateur a forcé l'ajout d'un nouveau lexème afin d'éviter que le programme s'arrête prématurément : `EOL`. Celui-ci indique la fin de la requête (End-Of-Line), et empêche l'arrêt de la boucle avant d'atteindre ce lexème.
-
-- Kiefer à plusieurs fois fait preuve d'inattention, mais la taxation d'un stack de quartz semble l'avoir remis dans le droit chemin
 
 ## Fonctionnalité supplémentaire
 Notre projet présente quelque fonctionnalité supplémentaires :
