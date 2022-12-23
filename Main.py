@@ -21,7 +21,8 @@ if __name__ == "__main__":
 	if(config.has_option("main", "dbName")):
 		spjrud = SPJRUD(config.get("main", "dbName"))
 	else:
-		config.add_section("main")
+		if(not config.has_section("main")):
+			config.add_section("main")
 		with open(CONFIG_FILE, 'w') as f:
 			config.write(f)
 
