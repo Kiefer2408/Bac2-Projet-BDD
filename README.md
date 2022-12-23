@@ -114,7 +114,7 @@ Database Found
 Database Not Found
 
 ```
-```
+
 Nettoyage du terminal,l'utilisateur peut à tout moment nettoyer le terminal en utilisant la commande suivante:
 ```
 @clear
@@ -136,6 +136,7 @@ Affichage, l'utilisateur peut afficher une table ou une requête SPJRUD via la c
  3  | Teddy | 23  | Norway     | 20000.0 
  4  | Mark  | 25  | Rich-Mond  | 65000.0 
 ```
+
 Quitter,l'utilisateur peut quitter à tout moment le programme via la commande suivante: 
 ```
 @exit
