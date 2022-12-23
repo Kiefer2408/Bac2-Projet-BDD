@@ -1,5 +1,7 @@
 # Bac2-Projet-BDD
 
+Lien du GitHub du projet : https://github.com/Kiefer2408/Bac2-Projet-BDD
+
 Le projet de base de donnée de l'année 2022-2023 consiste à la création d'un outils de compilation (traduction) de requête SPJRUD vers des requêtes SQL.
 
 ## Usage
